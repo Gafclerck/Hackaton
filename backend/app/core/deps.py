@@ -9,3 +9,4 @@ def get_session() -> Generator[Session, None, None]:
         yield sessionlocal
     finally:
         sessionlocal.close()
+

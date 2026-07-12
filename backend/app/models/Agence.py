@@ -5,10 +5,8 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.base import Base
 from typing import List
 
-from datetime import timezone
-
 class Agence(Base):
-    __tablename__ = "agences"
+    __tablename__ = "agence"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     nom: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -20,4 +18,15 @@ class Agence(Base):
     created_at: Mapped[datetime] = mapped_column( DateTime,nullable=False,  server_default=func.now())
 
     # ATTRIBUT DE RELATION
-    users: Mapped[list["Agence"]] = relationship(back_populates="users")
+    users: Mapped[List["User"]] = relationship(
+        back_populates="agence", foreign_keys="User.agence_id"
+    )
+    dossiers_recus: Mapped[List["Dossier"]] = relationship(
+        back_populates="agence_receptrice", foreign_keys="Dossier.agence_receptrice_id"
+    )
+    dossiers_assignes: Mapped[List["Dossier"]] = relationship(
+        back_populates="agence_assignee", foreign_keys="Dossier.agence_assignee_id"
+    )
+    analyses_suggerees: Mapped[List["AnalyseIA"]] = relationship(
+        back_populates="agence_suggeree"
+    )

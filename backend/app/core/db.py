@@ -3,7 +3,7 @@ from sqlalchemy import create_engine
 from app.core.config import settings
 
 engine = create_engine(
-    settings.DATABASE_URL,
+    settings.DATABASE_URL_DEV,
     echo=True,
     pool_pre_ping=True
 )
@@ -13,7 +13,6 @@ session = sessionmaker(
     autoflush=False,
     bind=engine
 )
-
 
 # def init_db(session: Session):
 #     from app.schemas.user import AdminRegistrationRequest

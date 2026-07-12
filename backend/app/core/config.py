@@ -4,7 +4,7 @@ load_dotenv()
 
 class Settings(BaseSettings):
     DATABASE_URL: str
-    
+    DATABASE_URL_DEV: str
     # PROJECT_NAME: str 
     # API_STR: str
     # ENVIRONMENT: str = "local"
