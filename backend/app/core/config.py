@@ -5,22 +5,13 @@ load_dotenv()
 class Settings(BaseSettings):
     DATABASE_URL: str
     DATABASE_URL_DEV: str
-    # PROJECT_NAME: str 
-    # API_STR: str
-    # ENVIRONMENT: str = "local"
+    API_STR: str = "/api"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    SECRET_KEY: str
+    ALGORITHM: str = "HS256"
+    ALLOWED_ORIGINS: list[str] = ["http://localhost:5173"]
 
-    # SECRET_KEY: str
-    # ALGORITHM: str 
-    # ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
-    # VERIFICATION_CODE_EXPIRE_MINUTES: int = 15
-    # all_cors_origins: list = ["*"]
-
-    # FIRST_SUPERUSER: str
-    # FIRST_SUPERUSER_PASSWORD: str
-
-    # STRIPE_SECRET_KEY: str
-    # STRIPE_PUBLISHABLE_KEY: str
-    # STRIPE_WEBHOOK_SECRET: str
-    # FRONTEND_URL: str
+    class Config:
+        env_file = ".env"
 
 settings = Settings()

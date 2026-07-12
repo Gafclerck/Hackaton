@@ -1,0 +1,2 @@
+- il faut change les nom des attrbut de quatre dernieres classe sque tu a mis pour etre en totla conformite avec les autre classes
+-

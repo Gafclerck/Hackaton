@@ -1,0 +1,52 @@
+from pydantic import BaseModel, EmailStr, Field
+from datetime import datetime
+from app.models.User import UserRole
+from typing import Optional
+
+class BaseRegistrationRequest(BaseModel):
+    nom: str = Field(..., min_length=1, max_length=100)
+    prenom: str = Field(..., min_length=1, max_length=100)
+    email: EmailStr
+    password: str = Field(..., min_length=6, max_length=100)
+    agence_id: Optional[int] = Field(None, gt=0)
+
+
+class RegistrationRequest(BaseRegistrationRequest):
+    role: UserRole = Field(...)
+
+
+class ChefCentralRegisterRequest(BaseRegistrationRequest):
+    role: UserRole = Field(...)
+
+
+class ChefAgenceRegisterRequest(BaseRegistrationRequest):
+    pass
+
+
+class UserResponse(BaseModel):
+    id: int
+    nom: str
+    prenom: str
+    email: str
+    role: UserRole
+    agence_id: Optional[int] = None
+    actif: bool
+    created_at: datetime
+    last_login: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class UserUpdateRequest(BaseModel):
+    nom: Optional[str] = Field(None, min_length=1, max_length=100)
+    prenom: Optional[str] = Field(None, min_length=1, max_length=100)
+    password: Optional[str] = Field(None, min_length=6, max_length=100)
+    actif: Optional[bool] = None
+    role: Optional[UserRole] = None
+    agence_id: Optional[int] = Field(None, gt=0)
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str = "bearer"

@@ -15,5 +15,5 @@ class Notification(Base):
     lue: Mapped[bool] = mapped_column(Boolean,default=False,nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, server_default=func.now(),nullable=False)
 
-    destinataire = relationship("User", back_populates="notifications")
-    dossier = relationship("Dossier", back_populates="notifications") 
+    # destinataire = relationship("User", back_populates="notifications")
+    # dossier = relationship("Dossier", back_populates="notifications") 

@@ -12,5 +12,5 @@ class TypeAffaire(Base):
     libelle: Mapped[str] = mapped_column(String(150), nullable=False)
     code: Mapped[Optional[str]] = mapped_column(String(30))
 
-    #dossiers: Mapped[List["Dossier"]] = relationship(back_populates="type_affaire")
+    # dossiers: Mapped[List["Dossier"]] = relationship(back_populates="type_affaire")
 
