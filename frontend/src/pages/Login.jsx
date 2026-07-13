@@ -108,7 +108,7 @@ export default function Login() {
             </div>
 
             <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-[22px] h-[22px] text-gray-400 pointer-events-none" />
+              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-[22px] h-[22px] text-gray-400 pointer-events-none z-10" />
               <Input
                 type={showPassword ? "text" : "password"}
                 placeholder="Mot de passe"
@@ -120,7 +120,7 @@ export default function Login() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1 z-10"
               >
                 {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
