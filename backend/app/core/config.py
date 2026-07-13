@@ -1,6 +1,5 @@
 from pydantic_settings import BaseSettings
-from dotenv import load_dotenv
-load_dotenv()
+
 
 class Settings(BaseSettings):
     DATABASE_URL: str
@@ -10,8 +9,10 @@ class Settings(BaseSettings):
     SECRET_KEY: str
     ALGORITHM: str = "HS256"
     ALLOWED_ORIGINS: list[str] = ["http://localhost:5173"]
+    DEBUG: bool = False
 
     class Config:
         env_file = ".env"
+
 
 settings = Settings()

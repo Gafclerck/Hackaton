@@ -2,10 +2,14 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from typing import Annotated, Generator
 from sqlalchemy.orm import Session
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from app.core.config import settings
 from app.models.User import User, UserRole
 from app.core.db import session
 from app.services.auth_service import get_user_from_token
+
+limiter = Limiter(key_func=get_remote_address)
 
 reusable_oauth2 = OAuth2PasswordBearer(
     tokenUrl=f"{settings.API_STR}/auth/login"

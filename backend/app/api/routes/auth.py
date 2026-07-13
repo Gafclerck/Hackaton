@@ -1,15 +1,15 @@
-from fastapi import Depends, status, APIRouter
+from fastapi import Depends, Request, status, APIRouter
 from fastapi.security import OAuth2PasswordRequestForm
 from typing import Annotated
 from app.schemas.user import (
     RegistrationRequest,
     ChefCentralRegisterRequest,
     ChefAgenceRegisterRequest,
-    Token,
+    TokenResponse,
     UserResponse,
 )
-from app.core.deps import SessionDep, CurrentUser, RequireChefCentral, RequireChefAgence
-from app.services.auth_service import register_user, login_user
+from app.core.deps import SessionDep, CurrentUser, TokenDep, RequireChefCentral, RequireChefAgence, limiter
+from app.services.auth_service import register_user, login_user, refresh_access_token
 from app.models.User import UserRole
 
 router = APIRouter()
@@ -39,11 +39,23 @@ def register_by_chef_agence(
 
 
 @router.post("/login")
+@limiter.limit("5/minute")
 def login(
-    form_data: Annotated[OAuth2PasswordRequestForm, Depends()], db: SessionDep
-) -> Token:
-    access_token = login_user(db, form_data)
-    return Token(access_token=access_token, token_type="bearer")
+    request: Request,
+    form_data: Annotated[OAuth2PasswordRequestForm, Depends()],
+    db: SessionDep,
+) -> TokenResponse:
+    return login_user(db, form_data)
+
+
+@router.post("/refresh")
+@limiter.limit("10/minute")
+def refresh(
+    request: Request,
+    token: TokenDep,
+    db: SessionDep,
+) -> TokenResponse:
+    return refresh_access_token(db, token)
 
 
 @router.get("/me")

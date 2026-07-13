@@ -82,3 +82,6 @@ alembic.db
 # Node (if used for frontend tools)
 node_modules/
 package-lock.json
+AGENTS.md
+COMMENTS.md
+TODO.md

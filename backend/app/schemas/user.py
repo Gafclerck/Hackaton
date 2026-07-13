@@ -1,14 +1,25 @@
-from pydantic import BaseModel, EmailStr, Field
+import re
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from datetime import datetime
 from app.models.User import UserRole
 from typing import Optional
+
 
 class BaseRegistrationRequest(BaseModel):
     nom: str = Field(..., min_length=1, max_length=100)
     prenom: str = Field(..., min_length=1, max_length=100)
     email: EmailStr
-    password: str = Field(..., min_length=6, max_length=100)
+    password: str = Field(..., min_length=8, max_length=100)
     agence_id: Optional[int] = Field(None, gt=0)
+
+    # @field_validator("password")
+    # @classmethod
+    # def validate_password(cls, v):
+    #     if not re.search(r"[A-Z]", v):
+    #         raise ValueError("Le mot de passe doit contenir au moins une majuscule")
+    #     if not re.search(r"[0-9]", v):
+    #         raise ValueError("Le mot de passe doit contenir au moins un chiffre")
+    #     return v
 
 
 class RegistrationRequest(BaseRegistrationRequest):
@@ -41,7 +52,7 @@ class UserResponse(BaseModel):
 class UserUpdateRequest(BaseModel):
     nom: Optional[str] = Field(None, min_length=1, max_length=100)
     prenom: Optional[str] = Field(None, min_length=1, max_length=100)
-    password: Optional[str] = Field(None, min_length=6, max_length=100)
+    password: Optional[str] = Field(None, min_length=8, max_length=100)
     actif: Optional[bool] = None
     role: Optional[UserRole] = None
     agence_id: Optional[int] = Field(None, gt=0)
@@ -49,4 +60,10 @@ class UserUpdateRequest(BaseModel):
 
 class Token(BaseModel):
     access_token: str
+    token_type: str = "bearer"
+
+
+class TokenResponse(BaseModel):
+    access_token: str
+    refresh_token: str
     token_type: str = "bearer"
