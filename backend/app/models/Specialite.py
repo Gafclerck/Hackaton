@@ -3,6 +3,8 @@ from sqlalchemy import Integer, String, Text
 from app.core.base import Base
 from typing import List, Optional
 
+from app.models.UserSpecialite import UserSpecialite
+
 class Specialite(Base):
     __tablename__ = "specialite"
 
