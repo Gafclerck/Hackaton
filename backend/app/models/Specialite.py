@@ -12,4 +12,4 @@ class Specialite(Base):
     libelle: Mapped[str] = mapped_column(String(150), nullable=False)
     description: Mapped[Optional[str]] = mapped_column(Text)
 
-    users: Mapped[List["UserSpecialite"]] = relationship(back_populates="specialite")
+    # users: Mapped[List["UserSpecialite"]] = relationship(back_populates="specialite")

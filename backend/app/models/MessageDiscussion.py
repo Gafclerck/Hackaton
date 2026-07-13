@@ -14,7 +14,7 @@ class MessageDiscussion(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)
 
-    discussion = relationship("Discussion", back_populates="messages")
-    auteur = relationship("User", back_populates="messages")
-    parent = relationship("MessageDiscussion", remote_side=[id], back_populates="reponses")
-    reponses = relationship("MessageDiscussion", back_populates="parent", cascade="all, delete-orphan")
+    # discussion = relationship("Discussion", back_populates="messages")
+    # auteur = relationship("User", back_populates="messages")
+    # parent = relationship("MessageDiscussion", remote_side=[id], back_populates="reponses")
+    # reponses = relationship("MessageDiscussion", back_populates="parent", cascade="all, delete-orphan")

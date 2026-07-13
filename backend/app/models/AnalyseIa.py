@@ -22,7 +22,7 @@ class AnalyseIA(Base):
     validee_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
-    dossier = relationship("Dossier", back_populates="analyses")
-    agence_suggeree = relationship("Agence", foreign_keys=[agence_suggeree_id])
-    avocat_suggere = relationship("User", foreign_keys=[avocat_suggere_id])
-    validateur = relationship("User", foreign_keys=[validee_par])
+    # dossier = relationship("Dossier", back_populates="analyse_ia")
+    # agence_suggeree = relationship("Agence", foreign_keys=[agence_suggeree_id])
+    # avocat_suggere = relationship("User", foreign_keys=[avocat_suggere_id])
+    # validate_by = relationship("User", foreign_keys=[validee_par])

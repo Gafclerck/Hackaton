@@ -15,6 +15,6 @@ class Discussion(Base):
     sujet: Mapped[str] = mapped_column(String(255), nullable=False)
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
 
-    dossier: Mapped["Dossier"] = relationship(back_populates="discussions")
-    created_by: Mapped["User"] = relationship()
-    messages: Mapped[List["MessageDiscussion"]] = relationship(back_populates="discussion")
+    # dossier: Mapped["Dossier"] = relationship(back_populates="discussions")
+    # created_by: Mapped["User"] = relationship()
+    # messages: Mapped[List["MessageDiscussion"]] = relationship(back_populates="discussion")

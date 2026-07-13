@@ -17,5 +17,4 @@ class HistoriqueAction(Base):
     commentaire: Mapped[str | None] = mapped_column(Text)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
-    dossier = relationship("Dossier", back_populates="historique")
-    utilisateur = relationship("User", back_populates="historique_actions")
+    # dossier = relationship("Dossier", back_populates="historiques")

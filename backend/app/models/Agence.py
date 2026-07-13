@@ -17,16 +17,16 @@ class Agence(Base):
     actif: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     created_at: Mapped[datetime] = mapped_column( DateTime,nullable=False,  server_default=func.now())
 
-    # ATTRIBUT DE RELATION
-    users: Mapped[List["User"]] = relationship(
-        back_populates="agence", foreign_keys="User.agence_id"
-    )
-    dossiers_recus: Mapped[List["Dossier"]] = relationship(
-        back_populates="agence_receptrice", foreign_keys="Dossier.agence_receptrice_id"
-    )
-    dossiers_assignes: Mapped[List["Dossier"]] = relationship(
-        back_populates="agence_assignee", foreign_keys="Dossier.agence_assignee_id"
-    )
-    analyses_suggerees: Mapped[List["AnalyseIA"]] = relationship(
-        back_populates="agence_suggeree"
-    )
+    # # ATTRIBUT DE RELATION
+    # users: Mapped[List["User"]] = relationship(
+    #     back_populates="agence", foreign_keys="User.agence_id"
+    # )
+    # dossiers_recus: Mapped[List["Dossier"]] = relationship(
+    #     back_populates="agence_receptrice", foreign_keys="Dossier.agence_receptrice_id"
+    # )
+    # dossiers_assignes: Mapped[List["Dossier"]] = relationship(
+    #     back_populates="agence_assigne", foreign_keys="Dossier.agence_assigne_id"
+    # )
+    # analyses_suggerees: Mapped[List["AnalyseIA"]] = relationship(
+    #     back_populates="agence_suggeree"
+    # )
