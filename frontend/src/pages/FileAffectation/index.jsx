@@ -1,17 +1,17 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  FiClock, FiHome, FiUserCheck, FiZap,
-  FiCheckCircle, FiAlertCircle, FiChevronRight, FiList,
-} from "react-icons/fi";
+  Clock, Home, UserCheck, Zap,
+  CheckCircle, AlertCircle, ChevronRight, List,
+} from "lucide-react";
 import { dossiers, getClient, getAgence, getUtilisateur } from "../../data/mockData";
-import { ROLE_LABELS } from "../../utils/helpers";
+import { ROLE_LABELS } from "../../lib/constants";
 import StatusBadge from "../../components/ui/StatusBadge";
 import PrioriteStars from "../../components/ui/PrioriteStars";
 import ConfidenceBar from "../../components/ui/ConfidenceBar";
 import Avatar from "../../components/ui/Avatar";
 import EmptyState from "../../components/ui/EmptyState";
-import AffectationModal from "../../components/modals/AffectationModal";
+import AffectationModal from "../../components/dossiers/AffectationModal";
 
 const PRIORITE_LABELS = { 1: "P1", 2: "P2", 3: "P3", 4: "P4", 5: "P5" };
 
@@ -48,7 +48,7 @@ function DossierCard({ dossier, onAffecter }) {
             {dossier.reference}
           </span>
           <div className="flex items-center gap-1 ml-auto">
-            <FiClock size={12} className={prioriteHaute ? "text-warning" : "text-muted-foreground"} />
+            <Clock size={12} className={prioriteHaute ? "text-warning" : "text-muted-foreground"} />
             <span className={`text-[11px] ${prioriteHaute ? "text-warning font-semibold" : "text-muted-foreground"}`}>
               {attenteLabel(dossier.reference)}
             </span>
@@ -80,7 +80,7 @@ function DossierCard({ dossier, onAffecter }) {
           <div className="flex items-center justify-between mb-3.5">
             <div className="flex items-center gap-1.5">
               <div className="w-[22px] h-[22px] rounded-full bg-accent/10 flex items-center justify-center">
-                <FiZap size={11} className="text-accent" />
+                <Zap size={11} className="text-accent" />
               </div>
               <span className="text-[11px] font-bold text-accent uppercase tracking-widest">
                 Analyse IA
@@ -115,7 +115,7 @@ function DossierCard({ dossier, onAffecter }) {
               {/* Agence suggérée */}
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded bg-accent/[0.08] flex items-center justify-center shrink-0">
-                  <FiHome size={15} className="text-accent" />
+                  <Home size={15} className="text-accent" />
                 </div>
                 <div>
                   <div className="text-[10px] text-muted-foreground mb-px">Agence suggérée</div>
@@ -149,7 +149,7 @@ function DossierCard({ dossier, onAffecter }) {
               </div>
               {ia.justification?.map((j) => (
                 <div key={j} className="flex items-start gap-1.5">
-                  <FiCheckCircle size={12} className="text-accent shrink-0 mt-px" />
+                  <CheckCircle size={12} className="text-accent shrink-0 mt-px" />
                   <span className="text-[12px] text-foreground leading-relaxed">{j}</span>
                 </div>
               ))}
@@ -160,7 +160,7 @@ function DossierCard({ dossier, onAffecter }) {
         /* No IA */
         <div className="px-6 py-5 bg-background border-b border-border flex items-center gap-3">
           <div className="w-9 h-9 rounded-full bg-secondary flex items-center justify-center shrink-0">
-            <FiAlertCircle size={15} className="text-muted-foreground" />
+            <AlertCircle size={15} className="text-muted-foreground" />
           </div>
           <div>
             <span className="text-[11px] font-semibold bg-secondary text-muted-foreground rounded-full px-2.5 py-0.5 inline-block mb-1">
@@ -179,14 +179,14 @@ function DossierCard({ dossier, onAffecter }) {
           onClick={() => navigate(`/dossiers/${dossier.reference}`)}
           className="flex items-center gap-1.5 text-[13px] font-medium text-foreground bg-transparent border border-border rounded px-4 py-2.5 cursor-pointer hover:bg-secondary transition-colors min-h-[44px]"
         >
-          Voir le dossier <FiChevronRight size={13} />
+          Voir le dossier <ChevronRight size={13} />
         </button>
 
         <button
           onClick={() => onAffecter(dossier)}
           className="flex items-center gap-2 text-[13px] font-semibold text-primary-foreground bg-primary border-none rounded px-5 py-2.5 cursor-pointer shadow-md hover:opacity-90 transition-all min-h-[44px]"
         >
-          <FiUserCheck size={14} />
+          <UserCheck size={14} />
           {ia ? "Affecter" : "Affecter manuellement"}
         </button>
       </div>
@@ -210,7 +210,7 @@ export default function FileAffectation() {
     setAffectationTarget(d);
   }
 
-  function handleConfirm(agenceId, avocatId) {
+  function handleConfirm() {
     if (!affectationTarget) return;
     setAffectedRefs((prev) => new Set([...prev, affectationTarget.reference]));
     setAffectationTarget(null);
@@ -225,7 +225,7 @@ export default function FileAffectation() {
           <div>
             <div className="flex items-center gap-2.5 mb-1">
               <div className="w-8 h-8 rounded bg-secondary flex items-center justify-center">
-                <FiList size={15} className="text-primary" />
+                <List size={15} className="text-primary" />
               </div>
               <h1 className="text-xl font-bold text-foreground m-0">
                 File d'affectation
@@ -240,7 +240,7 @@ export default function FileAffectation() {
 
           {dossiersEnAttente.length > 0 && (
             <div className="flex items-center gap-2 bg-status-attente-bg text-status-attente-text rounded-full px-4 py-2 shrink-0">
-              <FiClock size={13} />
+              <Clock size={13} />
               <span className="text-[13px] font-semibold tabular-nums">
                 {dossiersEnAttente.length} en attente
               </span>
@@ -251,7 +251,7 @@ export default function FileAffectation() {
         {/* Cards or empty */}
         {dossiersEnAttente.length === 0 ? (
           <EmptyState
-            icon={FiCheckCircle}
+            icon={CheckCircle}
             title="Aucun dossier en attente — bon travail !"
             description="Tous les dossiers reçus ont été affectés. Repassez plus tard ou consultez la liste complète des dossiers."
           />

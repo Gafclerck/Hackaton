@@ -1,11 +1,11 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  FiSearch, FiX, FiChevronDown, FiChevronUp,
-  FiChevronLeft, FiChevronRight, FiRotateCcw,
-} from "react-icons/fi";
+  Search, X, ChevronDown, ChevronUp,
+  ChevronLeft, ChevronRight, RotateCcw,
+} from "lucide-react";
 import { dossiers, agences, utilisateurs, getClient, getAgence, getUtilisateur } from "../../data/mockData";
-import { STATUT_LABELS, STATUT_STYLES } from "../../utils/helpers";
+import { STATUT_LABELS } from "../../lib/constants";
 import StatusBadge from "../../components/ui/StatusBadge";
 import PrioriteStars from "../../components/ui/PrioriteStars";
 
@@ -26,7 +26,7 @@ const COLUMNS = [
 
 function SortIcon({ col, sortCol, sortDir }) {
   if (col !== sortCol) return <span className="opacity-30 text-[11px]">⇅</span>;
-  return sortDir === "asc" ? <FiChevronUp size={13} className="text-primary" /> : <FiChevronDown size={13} className="text-primary" />;
+  return sortDir === "asc" ? <ChevronUp size={13} className="text-primary" /> : <ChevronDown size={13} className="text-primary" />;
 }
 
 function FilterSelect({ label, value, onChange, options }) {
@@ -45,7 +45,7 @@ function FilterSelect({ label, value, onChange, options }) {
         <option value="">{label}</option>
         {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
       </select>
-      <FiChevronDown size={13} className={`absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none ${active ? "text-primary" : "text-muted-foreground"}`} />
+      <ChevronDown size={13} className={`absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none ${active ? "text-primary" : "text-muted-foreground"}`} />
     </div>
   );
 }
@@ -54,7 +54,7 @@ function FilterChip({ label, onRemove }) {
   return (
     <span className="inline-flex items-center gap-1 bg-primary/10 text-primary rounded-md px-2 py-0.5 text-[11px] font-medium">
       {label}
-      <button onClick={onRemove} className="text-primary/60 hover:text-primary"><FiX size={11} /></button>
+      <button onClick={onRemove} className="text-primary/60 hover:text-primary"><X size={11} /></button>
     </span>
   );
 }
@@ -133,7 +133,7 @@ export default function DossiersList() {
         {/* Filter bar */}
         <div className="flex items-center flex-wrap gap-2 p-3.5 bg-card border border-border rounded">
           <div className="relative shrink-0">
-            <FiSearch size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+            <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
             <input
               type="text"
               placeholder="Référence, titre, client…"
@@ -144,7 +144,7 @@ export default function DossiersList() {
             />
             {search && (
               <button onClick={() => { setSearch(""); setPage(1); }} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground">
-                <FiX size={13} />
+                <X size={13} />
               </button>
             )}
           </div>
@@ -164,7 +164,7 @@ export default function DossiersList() {
             <>
               <div className="w-px h-6 bg-border mx-1" />
               <button onClick={resetFilters} className="inline-flex items-center gap-1.5 h-9 px-3 text-[13px] text-muted-foreground rounded hover:bg-secondary transition-colors">
-                <FiRotateCcw size={13} />Réinitialiser
+                <RotateCcw size={13} />Réinitialiser
               </button>
             </>
           )}
@@ -240,14 +240,14 @@ export default function DossiersList() {
           </span>
           <div className="flex items-center gap-1">
             <PBtn onClick={() => setPage(1)} disabled={page === 1} label="«" />
-            <PBtn onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} icon={<FiChevronLeft size={14} />} />
+            <PBtn onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} icon={<ChevronLeft size={14} />} />
             {Array.from({ length: totalPages }, (_, i) => i + 1)
               .filter((p) => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
               .reduce((acc, p, i, arr) => { if (i > 0 && p - arr[i - 1] > 1) acc.push("…"); acc.push(p); return acc; }, [])
               .map((p, i) => p === "…"
                 ? <span key={`d${i}`} className="px-1 text-muted-foreground text-xs">…</span>
                 : <PBtn key={p} onClick={() => setPage(p)} active={p === page} label={String(p)} />)}
-            <PBtn onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} icon={<FiChevronRight size={14} />} />
+            <PBtn onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} icon={<ChevronRight size={14} />} />
             <PBtn onClick={() => setPage(totalPages)} disabled={page === totalPages} label="»" />
           </div>
         </div>

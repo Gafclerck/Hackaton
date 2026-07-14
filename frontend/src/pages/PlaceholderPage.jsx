@@ -1,23 +1,15 @@
-import { FiGrid } from "react-icons/fi";
+import { useLocation } from "react-router-dom";
+import { Construction } from "lucide-react";
 
-const LABELS = {
-  agences:      "Agences",
-  utilisateurs: "Utilisateurs",
-  specialites:  "Spécialités",
-  parametres:   "Paramètres",
-};
+export default function PlaceholderPage() {
+  const { pathname } = useLocation();
+  const name = pathname.replace("/", "").replace(/-/g, " ");
 
-export default function PlaceholderPage({ pageId }) {
-  const label = LABELS[pageId] || pageId;
   return (
-    <div className="flex-1 flex items-center justify-center h-full bg-background">
-      <div className="text-center">
-        <div className="w-16 h-16 rounded-3xl bg-secondary flex items-center justify-center mx-auto mb-4 text-muted-foreground">
-          <FiGrid size={28} />
-        </div>
-        <h2 className="text-xl font-semibold text-foreground mb-1.5">{label}</h2>
-        <p className="text-sm text-muted-foreground">Cet écran sera implémenté dans la prochaine itération.</p>
-      </div>
+    <div className="flex flex-col items-center justify-center h-full gap-3 text-muted-foreground">
+      <Construction size={40} strokeWidth={1.5} />
+      <p className="text-sm font-medium capitalize">{name}</p>
+      <p className="text-xs">Page en cours de construction</p>
     </div>
   );
 }

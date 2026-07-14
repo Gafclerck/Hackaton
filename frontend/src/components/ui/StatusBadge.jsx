@@ -1,4 +1,4 @@
-import { STATUT_LABELS, STATUT_STYLES } from "../../utils/helpers";
+import { STATUT_LABELS, STATUT_STYLES } from "../../lib/constants";
 
 export default function StatusBadge({ statut }) {
   const s = STATUT_STYLES[statut] || STATUT_STYLES.nouveau;

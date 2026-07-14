@@ -1,4 +1,4 @@
-import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 export default function Pagination({ page, totalPages, onPageChange }) {
   if (totalPages <= 1) return null;
@@ -13,14 +13,14 @@ export default function Pagination({ page, totalPages, onPageChange }) {
           disabled={page <= 1}
           className="p-2 rounded border border-border bg-card text-foreground hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
-          <FiChevronLeft size={14} />
+          <ChevronLeft size={14} />
         </button>
         <button
           onClick={() => onPageChange(page + 1)}
           disabled={page >= totalPages}
           className="p-2 rounded border border-border bg-card text-foreground hover:bg-secondary disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
         >
-          <FiChevronRight size={14} />
+          <ChevronRight size={14} />
         </button>
       </div>
     </div>

@@ -1,21 +1,20 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  FiFolder, FiTrendingUp, FiClock, FiCheckCircle, FiRepeat,
-  FiList, FiPlus, FiArrowRight, FiUsers, FiHome, FiMessageSquare,
-  FiChevronRight, FiAlertTriangle,
-} from "react-icons/fi";
+  Folder, TrendingUp, Clock, CheckCircle, Repeat,
+  List, Plus, ArrowRight, Users, Home, MessageSquare,
+  ChevronRight, AlertTriangle,
+} from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
-import { dossiers, agences, utilisateurs, getClient, getAgence } from "../../data/mockData";
-import { ROLE_LABELS, isActif, getGreeting } from "../../utils/helpers";
+import { dossiers, agences, utilisateurs, getClient } from "../../data/mockData";
+import { ROLE_LABELS, isActif } from "../../lib/constants";
+import { getGreeting } from "../../lib/utils";
 import Avatar from "../../components/ui/Avatar";
 import KpiCard from "../../components/ui/KpiCard";
 import SectionCard from "../../components/ui/SectionCard";
 import StatusBadge from "../../components/ui/StatusBadge";
 
-const STATUTS_ACTIFS = ["en_attente", "en_analyse_ia", "en_cours", "affecte", "transfert_demande", "nouveau"];
-
-function GerantCentralDashboard({ user }) {
+function GerantCentralDashboard() {
   const navigate = useNavigate();
   const actifs = useMemo(() => dossiers.filter((d) => isActif(d.statut)), []);
 
@@ -47,10 +46,10 @@ function GerantCentralDashboard({ user }) {
         </div>
 
         <div className="grid grid-cols-4 gap-4 mb-8">
-          <KpiCard label="Dossiers actifs" value={actifs.length} icon={FiFolder} accent />
-          <KpiCard label="Priorités hautes" value={urgents} icon={FiTrendingUp} />
-          <KpiCard label="En attente d'affectation" value={enAttente} icon={FiClock} />
-          <KpiCard label="En cours de traitement" value={enCours} icon={FiCheckCircle} />
+          <KpiCard label="Dossiers actifs" value={actifs.length} icon={Folder} accent />
+          <KpiCard label="Priorités hautes" value={urgents} icon={TrendingUp} />
+          <KpiCard label="En attente d'affectation" value={enAttente} icon={Clock} />
+          <KpiCard label="En cours de traitement" value={enCours} icon={CheckCircle} />
         </div>
 
         <div className="grid grid-cols-2 gap-6 mb-6">
@@ -112,7 +111,7 @@ function GerantCentralDashboard({ user }) {
           <SectionCard title="Transferts en attente d'approbation" subtitle="Lecture seule — approbation depuis la fiche dossier">
             {transfertsPendants.length === 0 ? (
               <div className="text-center py-8">
-                <FiCheckCircle size={28} className="text-success mx-auto mb-2" />
+                <CheckCircle size={28} className="text-success mx-auto mb-2" />
                 <p className="text-[13px] text-muted-foreground">Aucun transfert en attente</p>
               </div>
             ) : (
@@ -123,7 +122,7 @@ function GerantCentralDashboard({ user }) {
                     <div key={d.reference}
                       onClick={() => navigate(`/dossiers/${d.reference}`)}
                       className={`flex items-center gap-4 py-3.5 cursor-pointer hover:opacity-75 transition-opacity ${i > 0 ? "border-t border-border" : ""}`}>
-                      <FiAlertTriangle size={16} className="text-status-transfert-text shrink-0" />
+                      <AlertTriangle size={16} className="text-status-transfert-text shrink-0" />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 mb-0.5">
                           <span className="text-[11px] font-bold text-muted-foreground tabular-nums">{d.reference}</span>
@@ -137,7 +136,7 @@ function GerantCentralDashboard({ user }) {
                           </div>
                         )}
                       </div>
-                      <FiArrowRight size={15} className="text-muted-foreground shrink-0" />
+                      <ArrowRight size={15} className="text-muted-foreground shrink-0" />
                     </div>
                   );
                 })}
@@ -148,28 +147,28 @@ function GerantCentralDashboard({ user }) {
           <div className="w-[280px] flex flex-col gap-3">
             <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-1">Raccourcis</h2>
             <button onClick={() => navigate("/agences")} className="flex items-center gap-3.5 p-3.5 bg-card border border-border rounded-2xl text-left w-full hover:opacity-85 transition-opacity shadow-sm">
-              <div className="w-9 h-9 rounded bg-secondary flex items-center justify-center text-primary shrink-0"><FiHome size={17} /></div>
+              <div className="w-9 h-9 rounded bg-secondary flex items-center justify-center text-primary shrink-0"><Home size={17} /></div>
               <div className="flex-1 min-w-0">
                 <div className="text-[13px] font-semibold text-foreground">Créer une agence</div>
                 <div className="text-[11px] text-muted-foreground">Gestion des agences</div>
               </div>
-              <FiArrowRight size={15} className="text-muted-foreground shrink-0" />
+              <ArrowRight size={15} className="text-muted-foreground shrink-0" />
             </button>
             <button onClick={() => navigate("/utilisateurs")} className="flex items-center gap-3.5 p-3.5 bg-card border border-border rounded-2xl text-left w-full hover:opacity-85 transition-opacity shadow-sm">
-              <div className="w-9 h-9 rounded bg-secondary flex items-center justify-center text-primary shrink-0"><FiUsers size={17} /></div>
+              <div className="w-9 h-9 rounded bg-secondary flex items-center justify-center text-primary shrink-0"><Users size={17} /></div>
               <div className="flex-1 min-w-0">
                 <div className="text-[13px] font-semibold text-foreground">Créer un utilisateur</div>
                 <div className="text-[11px] text-muted-foreground">Gestion des utilisateurs</div>
               </div>
-              <FiArrowRight size={15} className="text-muted-foreground shrink-0" />
+              <ArrowRight size={15} className="text-muted-foreground shrink-0" />
             </button>
             <button onClick={() => navigate("/dossiers")} className="flex items-center gap-3.5 p-3.5 bg-primary text-primary-foreground rounded-2xl text-left w-full hover:opacity-90 transition-opacity shadow-md">
-              <div className="w-9 h-9 rounded bg-primary-foreground/12 flex items-center justify-center shrink-0"><FiFolder size={17} /></div>
+              <div className="w-9 h-9 rounded bg-primary-foreground/12 flex items-center justify-center shrink-0"><Folder size={17} /></div>
               <div className="flex-1 min-w-0">
                 <div className="text-[13px] font-semibold">Voir tous les dossiers</div>
                 <div className="text-[11px] text-primary-foreground/60">{actifs.length} dossier{actifs.length !== 1 ? "s" : ""} actif{actifs.length !== 1 ? "s" : ""}</div>
               </div>
-              <FiArrowRight size={15} className="text-primary-foreground/50 shrink-0" />
+              <ArrowRight size={15} className="text-primary-foreground/50 shrink-0" />
             </button>
           </div>
         </div>
@@ -210,9 +209,9 @@ function AvocatEnChefDashboard({ user }) {
         </div>
 
         <div className="grid grid-cols-3 gap-4 mb-8">
-          <KpiCard label="Dossiers en file d'affectation" value={fileAttente.length} icon={FiList} accent />
-          <KpiCard label="Transferts à approuver" value={transfertsATraiter.length} icon={FiRepeat} warn />
-          <KpiCard label="Dossiers actifs dans l'agence" value={dossiersAgence.length} icon={FiFolder} />
+          <KpiCard label="Dossiers en file d'affectation" value={fileAttente.length} icon={List} accent />
+          <KpiCard label="Transferts à approuver" value={transfertsATraiter.length} icon={Repeat} warn />
+          <KpiCard label="Dossiers actifs dans l'agence" value={dossiersAgence.length} icon={Folder} />
         </div>
 
         <div className="grid grid-cols-2 gap-6 mb-6">
@@ -221,13 +220,13 @@ function AvocatEnChefDashboard({ user }) {
             subtitle={fileAttente.length === 0 ? "Aucun dossier en attente" : `${fileAttente.length} dossier${fileAttente.length > 1 ? "s" : ""} en attente`}
             action={
               <button onClick={() => navigate("/file")} className="flex items-center gap-1.5 text-xs font-semibold text-primary border border-primary rounded px-3 py-1.5 hover:bg-secondary transition-colors">
-                Voir tout <FiArrowRight size={12} />
+                Voir tout <ArrowRight size={12} />
               </button>
             }
           >
             {fileAttente.length === 0 ? (
               <div className="text-center py-8">
-                <FiCheckCircle size={32} className="text-success mx-auto mb-2.5" />
+                <CheckCircle size={32} className="text-success mx-auto mb-2.5" />
                 <p className="text-sm font-medium text-foreground mb-1">File vide</p>
                 <p className="text-[13px] text-muted-foreground">Tous les dossiers ont été affectés.</p>
               </div>
@@ -249,11 +248,11 @@ function AvocatEnChefDashboard({ user }) {
                         <div className="text-[13px] font-semibold text-foreground truncate mb-0.5">{d.titre}</div>
                         <div className="text-[11px] text-muted-foreground">{d.type_affaire}{cli ? ` · ${cli.nom}` : ""}</div>
                         <div className="flex items-center gap-1 mt-1.5">
-                          <FiClock size={11} className="text-muted-foreground" />
+                          <Clock size={11} className="text-muted-foreground" />
                           <span className="text-[11px] text-muted-foreground">En attente</span>
                         </div>
                       </div>
-                      <FiArrowRight size={15} className="text-muted-foreground shrink-0 self-center" />
+                      <ArrowRight size={15} className="text-muted-foreground shrink-0 self-center" />
                     </div>
                   );
                 })}
@@ -265,7 +264,7 @@ function AvocatEnChefDashboard({ user }) {
             <SectionCard title="Transferts à traiter" subtitle="Demandes en attente dans mon agence">
               {transfertsATraiter.length === 0 ? (
                 <div className="text-center py-5">
-                  <FiCheckCircle size={24} className="text-success mx-auto mb-2" />
+                  <CheckCircle size={24} className="text-success mx-auto mb-2" />
                   <p className="text-[13px] text-muted-foreground">Aucune demande de transfert en attente</p>
                 </div>
               ) : (
@@ -276,13 +275,13 @@ function AvocatEnChefDashboard({ user }) {
                       <div key={d.reference} onClick={() => navigate(`/dossiers/${d.reference}`)}
                         className={`flex items-center gap-3.5 py-3 cursor-pointer hover:opacity-75 transition-opacity ${i > 0 ? "border-t border-border" : ""}`}>
                         <div className="w-8 h-8 rounded-full bg-status-transfert-bg flex items-center justify-center shrink-0">
-                          <FiRepeat size={14} className="text-status-transfert-text" />
+                          <Repeat size={14} className="text-status-transfert-text" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="text-[13px] font-semibold text-foreground truncate">{d.titre}</div>
                           <div className="text-[11px] text-muted-foreground mt-0.5">{d.reference}{cli ? ` · ${cli.nom}` : ""}</div>
                         </div>
-                        <FiArrowRight size={14} className="text-muted-foreground shrink-0" />
+                        <ArrowRight size={14} className="text-muted-foreground shrink-0" />
                       </div>
                     );
                   })}
@@ -293,14 +292,14 @@ function AvocatEnChefDashboard({ user }) {
             <div className="flex flex-col gap-2.5">
               <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-0.5">Raccourcis</h2>
               <button onClick={() => window.dispatchEvent(new CustomEvent("cabinet:open-nouveau-dossier"))} className="flex items-center gap-3.5 p-3.5 bg-primary text-primary-foreground rounded-2xl text-left w-full hover:opacity-90 transition-opacity shadow-md">
-                <div className="w-9 h-9 rounded bg-primary-foreground/12 flex items-center justify-center shrink-0"><FiPlus size={17} /></div>
+                <div className="w-9 h-9 rounded bg-primary-foreground/12 flex items-center justify-center shrink-0"><Plus size={17} /></div>
                 <div className="flex-1 min-w-0">
                   <div className="text-[13px] font-semibold">Nouveau dossier</div>
                   <div className="text-[11px] text-primary-foreground/60">Créer et enregistrer un dossier</div>
                 </div>
               </button>
               <button onClick={() => navigate("/dossiers")} className="flex items-center gap-3.5 p-3.5 bg-card border border-border rounded-2xl text-left w-full hover:opacity-85 transition-opacity shadow-sm">
-                <div className="w-9 h-9 rounded bg-secondary flex items-center justify-center text-primary shrink-0"><FiFolder size={17} /></div>
+                <div className="w-9 h-9 rounded bg-secondary flex items-center justify-center text-primary shrink-0"><Folder size={17} /></div>
                 <div className="flex-1 min-w-0">
                   <div className="text-[13px] font-semibold text-foreground">Tous les dossiers</div>
                   <div className="text-[11px] text-muted-foreground">{dossiersAgence.length} dossier{dossiersAgence.length !== 1 ? "s" : ""} actif{dossiersAgence.length !== 1 ? "s" : ""}</div>
@@ -363,7 +362,6 @@ function AvocatDashboard({ user }) {
     dossiers.filter((d) => d.avocat_assigne_id === user.id && isActif(d.statut))
       .sort((a, b) => b.priorite - a.priorite), [user.id]);
 
-  const heure = new Date().getHours();
   const salutation = getGreeting();
   const prenom = user.nom?.split(" ")[0] || user.nom;
 
@@ -383,7 +381,7 @@ function AvocatDashboard({ user }) {
         <div className="grid grid-cols-2 gap-3 mb-8">
           <div className="bg-primary rounded-2xl p-5 flex items-center gap-3.5 shadow-md">
             <div className="w-10 h-10 rounded bg-primary-foreground/12 flex items-center justify-center shrink-0">
-              <FiFolder size={19} className="text-primary-foreground" />
+              <Folder size={19} className="text-primary-foreground" />
             </div>
             <div>
               <div className="text-[26px] font-bold text-primary-foreground leading-none tabular-nums">{mesDossiers.length}</div>
@@ -392,7 +390,7 @@ function AvocatDashboard({ user }) {
           </div>
           <div className="bg-card border border-border rounded-2xl p-5 flex items-center gap-3.5 shadow-sm">
             <div className="w-10 h-10 rounded bg-secondary flex items-center justify-center">
-              <FiMessageSquare size={19} className="text-muted-foreground" />
+              <MessageSquare size={19} className="text-muted-foreground" />
             </div>
             <div>
               <div className="text-[26px] font-bold text-muted-foreground leading-none tabular-nums">0</div>
@@ -406,14 +404,14 @@ function AvocatDashboard({ user }) {
           subtitle={`Triés par priorité · ${mesDossiers.length} dossier${mesDossiers.length !== 1 ? "s" : ""}`}
           action={
             <button onClick={() => navigate("/dossiers")} className="flex items-center gap-1.5 text-xs font-semibold text-primary border border-primary rounded px-3 py-1.5 hover:bg-secondary transition-colors whitespace-nowrap">
-              Voir tous <FiArrowRight size={12} />
+              Voir tous <ArrowRight size={12} />
             </button>
           }
         >
           {mesDossiers.length === 0 ? (
             <div className="text-center py-10">
               <div className="w-14 h-14 rounded-full bg-secondary flex items-center justify-center mx-auto mb-3">
-                <FiFolder size={24} className="text-muted-foreground" />
+                <Folder size={24} className="text-muted-foreground" />
               </div>
               <p className="text-sm font-medium text-foreground mb-1">Aucun dossier actif</p>
               <p className="text-[13px] text-muted-foreground">Vous n'avez pas de dossier assigné pour le moment.</p>
@@ -439,7 +437,7 @@ function AvocatDashboard({ user }) {
                         <span className="text-[10px] text-muted-foreground">{'★'.repeat(d.priorite)}{'☆'.repeat(5 - d.priorite)}</span>
                       </div>
                     </div>
-                    <FiChevronRight size={15} className="text-muted-foreground shrink-0 self-center" />
+                    <ChevronRight size={15} className="text-muted-foreground shrink-0 self-center" />
                   </div>
                 );
               })}
@@ -450,13 +448,13 @@ function AvocatDashboard({ user }) {
         <button onClick={() => window.dispatchEvent(new CustomEvent("cabinet:open-nouveau-dossier"))}
           className="flex items-center gap-4 w-full p-5 bg-primary border-none rounded-2xl cursor-pointer shadow-lg hover:opacity-90 hover:-translate-y-0.5 transition-all mt-6 text-left">
           <div className="w-10 h-10 rounded bg-primary-foreground/14 flex items-center justify-center shrink-0">
-            <FiPlus size={20} className="text-primary-foreground" />
+            <Plus size={20} className="text-primary-foreground" />
           </div>
           <div className="flex-1">
             <div className="text-sm font-semibold text-primary-foreground">Nouveau dossier</div>
             <div className="text-xs text-primary-foreground/60 mt-0.5">Créer et enregistrer un nouveau dossier client</div>
           </div>
-          <FiArrowRight size={18} className="text-primary-foreground/50" />
+          <ArrowRight size={18} className="text-primary-foreground/50" />
         </button>
       </div>
     </div>

@@ -1,17 +1,17 @@
 import { useState } from "react";
 import { useParams, useNavigate, Navigate } from "react-router-dom";
 import {
-  FiArrowLeft, FiChevronRight, FiUser, FiHome, FiFileText,
-  FiCheckCircle, FiMessageSquare, FiClock, FiPlay, FiRepeat,
-} from "react-icons/fi";
+  ArrowLeft, ChevronRight, User, Home, FileText,
+  CheckCircle, MessageSquare, Clock, Play, Repeat,
+} from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
 import { dossiers, getClient, getAgence, getUtilisateur } from "../../data/mockData";
-import { ROLE_LABELS } from "../../utils/helpers";
+import { ROLE_LABELS } from "../../lib/constants";
 import StatusBadge from "../../components/ui/StatusBadge";
 import PrioriteStars from "../../components/ui/PrioriteStars";
 import Avatar from "../../components/ui/Avatar";
-import AffectationModal from "../../components/modals/AffectationModal";
-import TransferModal from "../../components/modals/TransferModal";
+import AffectationModal from "../../components/dossiers/AffectationModal";
+import TransferModal from "../../components/dossiers/TransferModal";
 
 function Tab({ label, active, onClick }) {
   return (
@@ -72,9 +72,9 @@ export default function DossierDetail() {
       <div className="bg-card border-b border-border shrink-0">
         <div className="flex items-center gap-2 px-8 pt-3">
           <button onClick={() => navigate("/dossiers")} className="inline-flex items-center gap-1 text-[13px] text-muted-foreground hover:text-primary transition-colors">
-            <FiArrowLeft size={14} />Dossiers
+            <ArrowLeft size={14} />Dossiers
           </button>
-          <FiChevronRight size={13} className="text-border" />
+          <ChevronRight size={13} className="text-border" />
           <span className="text-[13px] text-foreground font-medium tabular-nums">{dossier.reference}</span>
         </div>
         <div className="flex items-start justify-between px-8 pt-3 gap-6">
@@ -87,11 +87,11 @@ export default function DossierDetail() {
             <h1 className="text-xl font-bold text-foreground mb-1.5">{dossier.titre}</h1>
             <div className="flex items-center gap-4 flex-wrap text-[13px] text-muted-foreground">
               <span className="inline-flex items-center gap-1">
-                <FiUser size={12} />{client?.nom ?? "—"}
+                <User size={12} />{client?.nom ?? "—"}
                 <span className="text-border mx-1">·</span>
                 {client?.type_client === "PHYSIQUE" ? "Personne physique" : "Personne morale"}
               </span>
-              <span className="inline-flex items-center gap-1"><FiFileText size={12} />{dossier.type_affaire}</span>
+              <span className="inline-flex items-center gap-1"><FileText size={12} />{dossier.type_affaire}</span>
             </div>
           </div>
           <div className="flex gap-2 shrink-0 pt-1">
@@ -100,12 +100,12 @@ export default function DossierDetail() {
                 onClick={() => setShowAffectation(true)}
                 className="inline-flex items-center gap-1.5 h-10 px-4 bg-primary text-primary-foreground rounded text-[13px] font-semibold hover:bg-sidebar-accent transition-colors"
               >
-                <FiCheckCircle size={14} />Affecter le dossier
+                <CheckCircle size={14} />Affecter le dossier
               </button>
             )}
             {dossier.statut === "affecte" && (
               <button className="inline-flex items-center gap-1.5 h-10 px-4 bg-primary text-primary-foreground rounded text-[13px] font-semibold hover:bg-sidebar-accent transition-colors">
-                <FiPlay size={14} />Marquer en cours
+                <Play size={14} />Marquer en cours
               </button>
             )}
           </div>
@@ -145,7 +145,7 @@ export default function DossierDetail() {
                 {client && (
                   <div className="flex items-start gap-3.5">
                     <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${client.type_client === "PHYSIQUE" ? "bg-blue-100" : "bg-purple-100"}`}>
-                      <FiUser size={18} className={client.type_client === "PHYSIQUE" ? "text-primary" : "text-purple-700"} />
+                      <User size={18} className={client.type_client === "PHYSIQUE" ? "text-primary" : "text-purple-700"} />
                     </div>
                     <div>
                       <div className="text-sm font-semibold text-foreground mb-0.5">{client.nom}</div>
@@ -160,7 +160,7 @@ export default function DossierDetail() {
                   </div>
                 )}
               </SectionCard>
-              <SectionCard title="Dernières actions" action={<button className="text-xs text-primary font-medium flex items-center gap-1">Voir tout <FiChevronRight size={13} /></button>}>
+              <SectionCard title="Dernières actions" action={<button className="text-xs text-primary font-medium flex items-center gap-1">Voir tout <ChevronRight size={13} /></button>}>
                 <div className="flex flex-col">
                   {DEMO_TIMELINE.map((event, idx) => (
                     <div key={event.id} className={`flex gap-3 ${idx > 0 ? "pt-4" : ""}`}>
@@ -184,7 +184,7 @@ export default function DossierDetail() {
                   <div>
                     <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-1.5">Agence assignée</p>
                     <div className="flex items-center gap-2.5">
-                      <div className="w-8 h-8 rounded bg-secondary flex items-center justify-center shrink-0"><FiHome size={15} className="text-primary" /></div>
+                      <div className="w-8 h-8 rounded bg-secondary flex items-center justify-center shrink-0"><Home size={15} className="text-primary" /></div>
                       <div>
                         <div className="text-[13px] font-medium text-foreground">{agence?.nom ?? "—"}</div>
                         {agence && <div className="text-[11px] text-muted-foreground">{agence.ville}{agence.est_siege ? " · Siège" : ""}</div>}
@@ -218,7 +218,7 @@ export default function DossierDetail() {
                     onClick={() => setShowTransfer(true)}
                     className="flex items-center justify-center gap-1.5 w-full h-10 border-[1.5px] border-border rounded bg-transparent cursor-pointer text-[13px] text-foreground font-medium hover:border-primary hover:bg-primary/5 transition-colors"
                   >
-                    <FiRepeat size={14} />Demander un transfert
+                    <Repeat size={14} />Demander un transfert
                   </button>
                 </div>
               </SectionCard>
@@ -234,19 +234,19 @@ export default function DossierDetail() {
         )}
         {activeTab === "documents" && (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
-            <div className="w-14 h-14 rounded-3xl bg-secondary flex items-center justify-center text-muted-foreground"><FiFileText size={24} /></div>
+            <div className="w-14 h-14 rounded-3xl bg-secondary flex items-center justify-center text-muted-foreground"><FileText size={24} /></div>
             <p className="text-sm font-medium text-muted-foreground">Documents — disponible prochainement</p>
           </div>
         )}
         {activeTab === "historique" && (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
-            <div className="w-14 h-14 rounded-3xl bg-secondary flex items-center justify-center text-muted-foreground"><FiClock size={24} /></div>
+            <div className="w-14 h-14 rounded-3xl bg-secondary flex items-center justify-center text-muted-foreground"><Clock size={24} /></div>
             <p className="text-sm font-medium text-muted-foreground">Historique — disponible prochainement</p>
           </div>
         )}
         {activeTab === "messagerie" && (
           <div className="flex flex-col items-center justify-center py-16 gap-3">
-            <div className="w-14 h-14 rounded-3xl bg-secondary flex items-center justify-center text-muted-foreground"><FiMessageSquare size={24} /></div>
+            <div className="w-14 h-14 rounded-3xl bg-secondary flex items-center justify-center text-muted-foreground"><MessageSquare size={24} /></div>
             <p className="text-sm font-medium text-muted-foreground">Messagerie — disponible prochainement</p>
           </div>
         )}
@@ -257,7 +257,7 @@ export default function DossierDetail() {
         dossier={dossier}
         open={showAffectation}
         onClose={() => setShowAffectation(false)}
-        onConfirm={(agenceId, avocatId) => {
+        onConfirm={() => {
           setShowAffectation(false);
         }}
         initialAgenceId={dossier.analyse_ia?.agence_suggeree_id}
@@ -269,7 +269,7 @@ export default function DossierDetail() {
         dossier={dossier}
         open={showTransfer}
         onClose={() => setShowTransfer(false)}
-        onConfirm={(motif) => {
+        onConfirm={() => {
           setShowTransfer(false);
         }}
       />
