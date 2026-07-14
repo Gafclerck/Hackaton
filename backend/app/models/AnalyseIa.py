@@ -3,6 +3,7 @@ from sqlalchemy import String, DateTime, Text, Integer, ForeignKey, func, Float,
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core.base import Base
+from typing import Optional
 
 
 class AnalyseIA(Base):
@@ -22,7 +23,7 @@ class AnalyseIA(Base):
     validee_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
-    # dossier = relationship("Dossier", back_populates="analyse_ia")
-    # agence_suggeree = relationship("Agence", foreign_keys=[agence_suggeree_id])
-    # avocat_suggere = relationship("User", foreign_keys=[avocat_suggere_id])
-    # validate_by = relationship("User", foreign_keys=[validee_par])
+    dossier: Mapped["Dossier"] = relationship("Dossier", back_populates="analyse_ia")
+    agence_suggeree: Mapped[Optional["Agence"]] = relationship("Agence", foreign_keys=[agence_suggeree_id])
+    avocat_suggere: Mapped[Optional["User"]] = relationship("User", foreign_keys=[avocat_suggere_id], back_populates="analyses_suggerees")
+    validee_par_user: Mapped[Optional["User"]] = relationship("User", foreign_keys=[validee_par], back_populates="analyses_validees")
