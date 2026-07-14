@@ -25,10 +25,11 @@ export function logout() {
 }
 
 export async function register(userData, role = "avocat") {
-  const endpoint = {
-    chef_central: "/auth/chef_central/register",
-    chef_agence: "/auth/chef_agence/register",
-  }[role] || "/auth/register";
+  const endpoint =
+    {
+      chef_central: "/auth/chef_central/register",
+      chef_agence: "/auth/chef_agence/register",
+    }[role] || "/auth/register";
 
   const { data } = await api.post(endpoint, userData);
   return data;
