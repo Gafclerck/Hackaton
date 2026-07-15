@@ -44,5 +44,35 @@ supporté par pydantic-settings.
 `BaseRegistrationRequest` (champs communs). La classe `RegistrationRequest` est
 conservée pour les tests.
 
-**Raison** : évite la duplication des champs communs (nom, prenom, email, password, agence_id).
-Chaque schéma public ne contient que ce que le rôle peut effectivement contrôler.
+**Raison** : evite la duplication des champs communs (nom, prenom, email, password, agence_id).
+Chaque schema public ne contient que ce que le role peut effectivement controler.
+
+## Dossier: creation avec auto-assignation
+
+`POST /api/dossier/create` accepte uniquement `{ client_id, type_affaire_id, titre, description_initiale?, priorite? }`.
+`agence_receptrice_id` et `avocat_en_chef_id` sont derives automatiquement du JWT:
+- `agence_receptrice_id` = `user.agence_id`
+- `avocat_en_chef_id` = chef_agence de la meme agence, ou self si l'utilisateur est chef_agence
+
+**Raison** : le frontend ne connait pas toujours la structure organique. Deriver ces valeurs
+cote serveur garantit la coherence et evite les erreurs d'assignation.
+
+## Dossier: filtrage par role
+
+Le endpoint `GET /api/dossier/all` retourne:
+- Les dossiers de l'agence si l'utilisateur est `chef_agence`
+- Les dossiers assigns si l'utilisateur est `avocat`
+- Tous les dossiers si l'utilisateur est `chef_central`
+
+**Raison** : chaque role a une visibilite differente. Le filtrage cote serveur
+protege les donnees et evite de charger des dossiers inutilement.
+
+## Dossier: transitions de statut
+
+Les transitions de statut sont validees cote serveur via `PATCH /api/dossier/{id}/statut`.
+Le statut "termine" est protege: seuls `chef_central` et `chef_agence` peuvent cloturer.
+Un dossier peut etre transfere (`PATCH /api/dossier/{id}/transfer`) ce qui remet le statut
+a `en_attente_affectation` et efface l'assignation.
+
+**Raison** : en droit, la cloture d'un dossier est un acte administratif qui ne peut
+etre fait que par un responsable. Le transfert libere le dossier pour re-assignation.

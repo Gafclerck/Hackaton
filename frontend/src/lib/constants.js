@@ -11,43 +11,33 @@ export const ROLE_LABELS = {
   avocat: "Avocat",
 };
 
-// ─── Statuts dossier (backend enum) ───────────────────────────────────────────
+// ─── Statuts dossier (aligned with backend StatutDossier enum) ────────────────
 export const STATUT_DOSSIER = {
-  nouveau: "nouveau",
-  en_analyse_ia: "en_analyse_ia",
   en_attente: "en_attente",
-  affecte: "affecte",
+  en_attente_affectation: "en_attente_affectation",
   en_cours: "en_cours",
-  transfert_demande: "transfert_demande",
-  cloture: "cloture",
+  termine: "termine",
   archive: "archive",
 };
 
 export const STATUT_LABELS = {
-  nouveau: "Nouveau",
-  en_analyse_ia: "Analyse IA",
   en_attente: "En attente",
-  affecte: "Affecté",
+  en_attente_affectation: "En attente d'affectation",
   en_cours: "En cours",
-  transfert_demande: "Transfert",
-  cloture: "Clôturé",
+  termine: "Terminé",
   archive: "Archivé",
 };
 
 export const STATUT_STYLES = {
-  nouveau:                { bg: "bg-status-nouveau-bg",   text: "text-status-nouveau-text" },
-  en_analyse_ia:          { bg: "bg-status-ia-bg",        text: "text-status-ia-text" },
-  en_attente:             { bg: "bg-status-attente-bg",   text: "text-status-attente-text" },
-  affecte:                { bg: "bg-status-affecte-bg",   text: "text-status-affecte-text" },
-  en_cours:               { bg: "bg-status-en-cours-bg",  text: "text-status-en-cours-text" },
-  transfert_demande:      { bg: "bg-status-transfert-bg", text: "text-status-transfert-text" },
-  cloture:                { bg: "bg-status-cloture-bg",   text: "text-status-cloture-text" },
-  archive:                { bg: "bg-status-archive-bg",   text: "text-status-archive-text" },
+  en_attente:               { bg: "bg-status-attente-bg",   text: "text-status-attente-text" },
+  en_attente_affectation:   { bg: "bg-status-attente-bg",   text: "text-status-attente-text" },
+  en_cours:                 { bg: "bg-status-en-cours-bg",  text: "text-status-en-cours-text" },
+  termine:                  { bg: "bg-status-cloture-bg",   text: "text-status-cloture-text" },
+  archive:                  { bg: "bg-status-archive-bg",   text: "text-status-archive-text" },
 };
 
 export const STATUTS_ACTIFS = [
-  "en_attente", "en_analyse_ia", "en_cours",
-  "affecte", "transfert_demande", "nouveau",
+  "en_attente", "en_attente_affectation", "en_cours",
 ];
 
 export function isActif(statut) {

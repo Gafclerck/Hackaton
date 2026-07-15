@@ -1,15 +1,21 @@
 import { useState, useMemo } from "react";
-import { Search, Check, ChevronRight, ChevronLeft, User, FileText, ClipboardList, Plus, Building2, UserCircle } from "lucide-react";
+import { Search, Check, ChevronRight, ChevronLeft, User, FileText, ClipboardList, Building2, UserCircle } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../ui/Dialog";
 import { Button } from "../ui/Button";
 import { Badge } from "../ui/Badge";
 import { Input } from "../ui/Input";
 import { Textarea } from "../ui/Textarea";
-import { cn, generateReference } from "../../lib/utils";
-import { TYPES_AFFAIRE, PRIORITE_LABELS, TYPE_CLIENT_LABELS } from "../../lib/constants";
-import { clients } from "../../data/mockData";
+import { cn } from "../../lib/utils";
+import { PRIORITE_LABELS, TYPE_CLIENT_LABELS } from "../../lib/constants";
+import { useClients } from "../../hooks/useClients";
+import { useReferentiel } from "../../hooks/useReferentiel";
+import { dossierService } from "../../services/dossierService";
 
-/* ── Step indicator ─────────────────────────────────────────────────────────── */
+function typeClientDisplay(type_client) {
+  return type_client === "moral" ? "MORALE" : "PHYSIQUE";
+}
+
+/*  Step indicator  */
 function StepIndicator({ currentStep }) {
   const steps = [
     { label: "Client", icon: User },
@@ -51,26 +57,22 @@ function StepIndicator({ currentStep }) {
   );
 }
 
-/* ── Step 0: Client ─────────────────────────────────────────────────────────── */
-function StepClient({ selectedClientId, setSelectedClientId, creatingNew, setCreatingNew, newClient, setNewClient }) {
+/*  Step 0: Client selection  */
+function StepClient({ selectedClientId, setSelectedClientId }) {
+  const { data: clients = [] } = useClients();
   const [search, setSearch] = useState("");
 
   const filteredClients = useMemo(() => {
     if (!search) return clients;
     const q = search.toLowerCase();
     return clients.filter((c) => c.nom.toLowerCase().includes(q));
-  }, [search]);
-
-  function updateNewClient(field, value) {
-    setNewClient((prev) => ({ ...prev, [field]: value }));
-  }
+  }, [search, clients]);
 
   return (
     <div className="space-y-4">
-      {/* Search existing client */}
       <div className="space-y-2">
         <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-          Client existant
+          Selectionner un client
         </label>
         <div className="relative">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -81,128 +83,48 @@ function StepClient({ selectedClientId, setSelectedClientId, creatingNew, setCre
             className="pl-9 h-9 text-xs"
           />
         </div>
-        <div className="space-y-1 max-h-36 overflow-y-auto">
-          {filteredClients.map((c) => (
-            <button
-              key={c.id}
-              onClick={() => { setSelectedClientId(c.id); setCreatingNew(false); }}
-              className={cn(
-                "w-full flex items-center gap-3 rounded-lg border p-3 text-left transition-colors",
-                selectedClientId === c.id
-                  ? "border-primary bg-primary/5"
-                  : "border-border hover:bg-secondary"
-              )}
-            >
-              <div className={cn(
-                "flex items-center justify-center w-8 h-8 rounded-md",
-                selectedClientId === c.id ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
-              )}>
-                {c.type_client === "MORALE" ? <Building2 size={14} /> : <UserCircle size={14} />}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground truncate">{c.nom}</p>
-                <span className="text-[11px] text-muted-foreground">{TYPE_CLIENT_LABELS[c.type_client]}</span>
-              </div>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Divider */}
-      <div className="flex items-center gap-3">
-        <div className="flex-1 h-px bg-border" />
-        <span className="text-[11px] text-muted-foreground font-medium">ou</span>
-        <div className="flex-1 h-px bg-border" />
-      </div>
-
-      {/* Create new client */}
-      <div className="space-y-3">
-        {!creatingNew ? (
-          <Button
-            variant="outline"
-            className="w-full justify-start gap-2"
-            onClick={() => setCreatingNew(true)}
-          >
-            <Plus size={14} />
-            Creer un nouveau client
-          </Button>
-        ) : (
-          <div className="rounded-lg border border-border bg-background p-4 space-y-3">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-medium text-foreground">Nouveau client</span>
+        <div className="space-y-1 max-h-60 overflow-y-auto">
+          {filteredClients.length === 0 && (
+            <p className="text-xs text-muted-foreground text-center py-4">
+              Aucun client trouvé. Créez-en un depuis la page Clients.
+            </p>
+          )}
+          {filteredClients.map((c) => {
+            const displayType = typeClientDisplay(c.type_client);
+            return (
               <button
-                onClick={() => setCreatingNew(false)}
-                className="text-[11px] text-muted-foreground hover:text-foreground"
+                key={c.id}
+                onClick={() => setSelectedClientId(c.id)}
+                className={cn(
+                  "w-full flex items-center gap-3 rounded-lg border p-3 text-left transition-colors",
+                  selectedClientId === c.id
+                    ? "border-primary bg-primary/5"
+                    : "border-border hover:bg-secondary"
+                )}
               >
-                Annuler
+                <div className={cn(
+                  "flex items-center justify-center w-8 h-8 rounded-md",
+                  selectedClientId === c.id ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
+                )}>
+                  {displayType === "MORALE" ? <Building2 size={14} /> : <UserCircle size={14} />}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">{c.nom}</p>
+                  <span className="text-[11px] text-muted-foreground">{TYPE_CLIENT_LABELS[displayType]}</span>
+                </div>
               </button>
-            </div>
-
-            {/* Type toggle */}
-            <div className="flex gap-2">
-              {["PHYSIQUE", "MORALE"].map((t) => (
-                <button
-                  key={t}
-                  onClick={() => updateNewClient("type_client", t)}
-                  className={cn(
-                    "flex-1 rounded-md border px-3 py-2 text-xs font-medium transition-colors",
-                    newClient.type_client === t
-                      ? "border-primary bg-primary/5 text-primary"
-                      : "border-border text-muted-foreground hover:bg-secondary"
-                  )}
-                >
-                  {TYPE_CLIENT_LABELS[t]}
-                </button>
-              ))}
-            </div>
-
-            {/* Nom */}
-            <div className="space-y-1">
-              <label className="text-[11px] text-muted-foreground">
-                {newClient.type_client === "MORALE" ? "Raison sociale" : "Nom complet"} *
-              </label>
-              <Input
-                value={newClient.nom}
-                onChange={(e) => updateNewClient("nom", e.target.value)}
-                placeholder={newClient.type_client === "MORALE" ? "Raison sociale" : "Nom et prenom"}
-                className="h-9 text-xs"
-              />
-            </div>
-
-            {/* NIN for PHYSIQUE */}
-            {newClient.type_client === "PHYSIQUE" && (
-              <div className="space-y-1">
-                <label className="text-[11px] text-muted-foreground">NIN (optionnel)</label>
-                <Input
-                  value={newClient.nin}
-                  onChange={(e) => updateNewClient("nin", e.target.value)}
-                  placeholder="Numero d'identification nationale"
-                  className="h-9 text-xs"
-                />
-              </div>
-            )}
-
-            {/* RCCM for MORALE */}
-            {newClient.type_client === "MORALE" && (
-              <div className="space-y-1">
-                <label className="text-[11px] text-muted-foreground">RCCM *</label>
-                <Input
-                  value={newClient.rccm}
-                  onChange={(e) => updateNewClient("rccm", e.target.value)}
-                  placeholder="Registre du Commerce et du Credit Mobilier"
-                  className="h-9 text-xs"
-                />
-              </div>
-            )}
-          </div>
-        )}
+            );
+          })}
+        </div>
       </div>
     </div>
   );
 }
 
-/* ── Step 1: Dossier ────────────────────────────────────────────────────────── */
+/*  Step 1: Dossier  */
 function StepDossier({ dossier, setDossier }) {
+  const { typesAffaires = [] } = useReferentiel();
+
   function update(field, value) {
     setDossier((prev) => ({ ...prev, [field]: value }));
   }
@@ -222,19 +144,19 @@ function StepDossier({ dossier, setDossier }) {
         />
       </div>
 
-      {/* Type d'affaire */}
+      {/* Type d'affaire — loaded from referentiel, uses id as value */}
       <div className="space-y-1">
         <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
           Type d'affaire *
         </label>
         <select
-          value={dossier.type_affaire}
-          onChange={(e) => update("type_affaire", e.target.value)}
+          value={dossier.type_affaire_id}
+          onChange={(e) => update("type_affaire_id", e.target.value)}
           className="flex h-10 w-full rounded-md border border-border bg-card px-3 py-2 text-sm outline-none focus:border-ring focus:ring-2 focus:ring-ring/20"
         >
           <option value="">Selectionner un type</option>
-          {TYPES_AFFAIRE.map((t) => (
-            <option key={t} value={t}>{t}</option>
+          {typesAffaires.map((t) => (
+            <option key={t.id} value={t.id}>{t.libelle}</option>
           ))}
         </select>
       </div>
@@ -245,8 +167,8 @@ function StepDossier({ dossier, setDossier }) {
           Description
         </label>
         <Textarea
-          value={dossier.description}
-          onChange={(e) => update("description", e.target.value)}
+          value={dossier.description_initiale}
+          onChange={(e) => update("description_initiale", e.target.value)}
           placeholder="Description du dossier (optionnel)"
           rows={3}
           className="text-sm"
@@ -295,9 +217,10 @@ function StepDossier({ dossier, setDossier }) {
   );
 }
 
-/* ── Step 2: Recap ──────────────────────────────────────────────────────────── */
-function StepRecap({ selectedClientId, creatingNew, newClient, dossier }) {
-  const client = creatingNew ? newClient : clients.find((c) => c.id === selectedClientId);
+/* Step 2: Recap  */
+function StepRecap({ selectedClientId, dossier, clients, typesAffaires }) {
+  const client = clients.find((c) => c.id === selectedClientId);
+  const typeAffaire = typesAffaires.find((t) => t.id === Number(dossier.type_affaire_id));
 
   return (
     <div className="space-y-4">
@@ -307,9 +230,9 @@ function StepRecap({ selectedClientId, creatingNew, newClient, dossier }) {
         {client ? (
           <div className="space-y-1">
             <p className="text-sm font-medium text-foreground">{client.nom}</p>
-            {client.type_client && (
-              <Badge variant="secondary" className="text-[10px]">{TYPE_CLIENT_LABELS[client.type_client]}</Badge>
-            )}
+            <Badge variant="secondary" className="text-[10px]">
+              {TYPE_CLIENT_LABELS[typeClientDisplay(client.type_client)]}
+            </Badge>
             {client.nin && <p className="text-[11px] text-muted-foreground">NIN: {client.nin}</p>}
             {client.rccm && <p className="text-[11px] text-muted-foreground">RCCM: {client.rccm}</p>}
             {client.email && <p className="text-[11px] text-muted-foreground">{client.email}</p>}
@@ -325,7 +248,7 @@ function StepRecap({ selectedClientId, creatingNew, newClient, dossier }) {
         <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">Dossier</h4>
         <div className="space-y-1">
           <p className="text-sm font-medium text-foreground">{dossier.titre}</p>
-          {dossier.type_affaire && <Badge variant="secondary" className="text-[10px]">{dossier.type_affaire}</Badge>}
+          {typeAffaire && <Badge variant="secondary" className="text-[10px]">{typeAffaire.libelle}</Badge>}
           <div className="flex items-center gap-2">
             <span className="text-[11px] text-muted-foreground">Priorite:</span>
             <Badge
@@ -335,8 +258,8 @@ function StepRecap({ selectedClientId, creatingNew, newClient, dossier }) {
               P{dossier.priorite} - {PRIORITE_LABELS[dossier.priorite]}
             </Badge>
           </div>
-          {dossier.description && (
-            <p className="text-xs text-muted-foreground mt-1">{dossier.description}</p>
+          {dossier.description_initiale && (
+            <p className="text-xs text-muted-foreground mt-1">{dossier.description_initiale}</p>
           )}
         </div>
       </div>
@@ -351,34 +274,28 @@ function StepRecap({ selectedClientId, creatingNew, newClient, dossier }) {
   );
 }
 
-/* ── Main modal ─────────────────────────────────────────────────────────────── */
+/*  Main modal  */
 export default function NouveauDossierModal({ open, onClose, onCreated }) {
+  const { data: clients = [] } = useClients();
+  const { typesAffaires = [] } = useReferentiel();
   const [step, setStep] = useState(0);
+  const [submitting, setSubmitting] = useState(false);
 
-  // Client state
+  // Client selection
   const [selectedClientId, setSelectedClientId] = useState(null);
-  const [creatingNew, setCreatingNew] = useState(false);
-  const [newClient, setNewClient] = useState({
-    type_client: "PHYSIQUE",
-    nom: "",
-    nin: "",
-    rccm: "",
-  });
 
-  // Dossier state
+  // Dossier state — field names match backend DossierCreate schema
   const [dossier, setDossier] = useState({
     titre: "",
-    type_affaire: "",
-    description: "",
+    type_affaire_id: "",
+    description_initiale: "",
     priorite: 3,
   });
 
   function resetState() {
     setStep(0);
     setSelectedClientId(null);
-    setCreatingNew(false);
-    setNewClient({ type_client: "PHYSIQUE", nom: "", nin: "", rccm: "" });
-    setDossier({ titre: "", type_affaire: "", description: "", priorite: 3 });
+    setDossier({ titre: "", type_affaire_id: "", description_initiale: "", priorite: 3 });
   }
 
   function handleClose() {
@@ -394,14 +311,29 @@ export default function NouveauDossierModal({ open, onClose, onCreated }) {
     if (step > 0) setStep((s) => s - 1);
   }
 
-  function handleCreate() {
-    const ref = generateReference();
-    resetState();
-    onCreated(ref);
+  async function handleCreate() {
+    if (submitting) return;
+    setSubmitting(true);
+    try {
+      await dossierService.create({
+        client_id: selectedClientId,
+        type_affaire_id: Number(dossier.type_affaire_id),
+        titre: dossier.titre,
+        description_initiale: dossier.description_initiale || null,
+        priorite: dossier.priorite,
+      });
+
+      resetState();
+      onCreated();
+    } catch (err) {
+      console.error("Erreur création dossier:", err);
+    } finally {
+      setSubmitting(false);
+    }
   }
 
-  const step0Valid = selectedClientId || (creatingNew && newClient.nom && (newClient.type_client === "PHYSIQUE" || newClient.rccm));
-  const step1Valid = dossier.titre && dossier.type_affaire;
+  const step0Valid = !!selectedClientId;
+  const step1Valid = dossier.titre && dossier.type_affaire_id;
   const canNext = step === 0 ? step0Valid : step === 1 ? step1Valid : true;
 
   return (
@@ -418,10 +350,6 @@ export default function NouveauDossierModal({ open, onClose, onCreated }) {
             <StepClient
               selectedClientId={selectedClientId}
               setSelectedClientId={setSelectedClientId}
-              creatingNew={creatingNew}
-              setCreatingNew={setCreatingNew}
-              newClient={newClient}
-              setNewClient={setNewClient}
             />
           )}
           {step === 1 && (
@@ -430,9 +358,9 @@ export default function NouveauDossierModal({ open, onClose, onCreated }) {
           {step === 2 && (
             <StepRecap
               selectedClientId={selectedClientId}
-              creatingNew={creatingNew}
-              newClient={newClient}
               dossier={dossier}
+              clients={clients}
+              typesAffaires={typesAffaires}
             />
           )}
         </div>
@@ -457,7 +385,7 @@ export default function NouveauDossierModal({ open, onClose, onCreated }) {
                   <ChevronRight size={14} />
                 </Button>
               ) : (
-                <Button onClick={handleCreate}>
+                <Button onClick={handleCreate} disabled={submitting}>
                   <Check size={14} />
                   Creer le dossier
                 </Button>

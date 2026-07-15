@@ -1,13 +1,14 @@
 from fastapi import APIRouter, Query, status
 
 from app.core.deps import SessionDep, CurrentUser, RequireChefAgence, RequireChefCentral, RequireChef
-from app.schemas.dossier import DossierCreate, DossierAffectation, DossierStatutUpdate, DossierRead
+from app.schemas.dossier import DossierCreate, DossierAffectation, DossierStatutUpdate, DossierRead, DossierTransfer
 from app.services.dossier_service import (
     create_dossier,
     list_dossiers,
     get_dossier_by_id,
     affecter_dossier,
     update_statut,
+    transfer_dossier,
     delete_dossier,
 )
 
@@ -47,3 +48,8 @@ def changer_statut(dossier_id: int, data: DossierStatutUpdate, db: SessionDep, c
 @router.delete("/{dossier_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete(dossier_id: int, db: SessionDep, current_user: RequireChef) -> None:
     delete_dossier(dossier_id, db)
+
+
+@router.patch("/{dossier_id}/transfer")
+def transfer(dossier_id: int, data: DossierTransfer, db: SessionDep, current_user: RequireChef) -> DossierRead:
+    return transfer_dossier(dossier_id, data.motif, current_user, db)

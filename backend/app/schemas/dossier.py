@@ -4,11 +4,10 @@ from typing import Optional
 
 from app.models.Dossier import StatutDossier
 
-
 class DossierCreate(BaseModel):
     client_id: int
-    agence_receptrice_id: int
-    avocat_en_chef_id: int
+    agence_receptrice_id: Optional[int] = None
+    avocat_en_chef_id: Optional[int] = None
     type_affaire_id: int
     titre: str = Field(..., min_length=1, max_length=255)
     description_initiale: Optional[str] = None
@@ -26,6 +25,12 @@ class DossierAffectation(BaseModel):
 
 class DossierStatutUpdate(BaseModel):
     statut: StatutDossier
+
+    model_config = {"from_attributes": True}
+
+
+class DossierTransfer(BaseModel):
+    motif: str = Field(..., min_length=1, max_length=500)
 
     model_config = {"from_attributes": True}
 

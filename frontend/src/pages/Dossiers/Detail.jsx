@@ -2,10 +2,12 @@ import { useState } from "react";
 import { useParams, useNavigate, Navigate } from "react-router-dom";
 import {
   ArrowLeft, ChevronRight, User, Home, FileText,
-  CheckCircle, MessageSquare, Clock, Play, Repeat,
+  CheckCircle, MessageSquare, Clock, Repeat,
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
-import { dossiers, getClient, getAgence, getUtilisateur } from "../../data/mockData";
+import { useDossiers } from "../../hooks/useDossiers";
+import { useAgences } from "../../hooks/useAgences";
+import { useUsers } from "../../hooks/useUsers";
 import { ROLE_LABELS } from "../../lib/constants";
 import StatusBadge from "../../components/ui/StatusBadge";
 import PrioriteStars from "../../components/ui/PrioriteStars";
@@ -55,17 +57,24 @@ export default function DossierDetail() {
   const { reference } = useParams();
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { data: dossiers = [], loading } = useDossiers();
+  const { data: agences = [] } = useAgences();
+  const { data: utilisateurs = [] } = useUsers();
   const [activeTab, setActiveTab] = useState("apercu");
   const [showAffectation, setShowAffectation] = useState(false);
   const [showTransfer, setShowTransfer] = useState(false);
   const dossier = dossiers.find((d) => d.reference === reference);
 
   if (!user) return <Navigate to="/login" replace />;
+  if (loading) return (
+    <div className="flex-1 flex items-center justify-center bg-background">
+      <p className="text-sm text-muted-foreground">Chargement...</p>
+    </div>
+  );
   if (!dossier) return <Navigate to="/dossiers" replace />;
 
-  const client = getClient(dossier.client_id);
-  const agence = getAgence(dossier.agence_assigne_id || dossier.agence_receptrice_id);
-  const avocat = getUtilisateur(dossier.avocat_assigne_id);
+  const agence = agences.find((a) => a.id === (dossier?.agence_assigne_id || dossier?.agence_receptrice_id));
+  const avocat = utilisateurs.find((u) => u.id === dossier?.avocat_assigne_id);
 
   return (
     <div className="flex flex-col h-full overflow-hidden bg-background">
@@ -87,25 +96,18 @@ export default function DossierDetail() {
             <h1 className="text-xl font-bold text-foreground mb-1.5">{dossier.titre}</h1>
             <div className="flex items-center gap-4 flex-wrap text-[13px] text-muted-foreground">
               <span className="inline-flex items-center gap-1">
-                <User size={12} />{client?.nom ?? "—"}
-                <span className="text-border mx-1">·</span>
-                {client?.type_client === "PHYSIQUE" ? "Personne physique" : "Personne morale"}
+                <User size={12} />{dossier.client_nom ?? "—"}
               </span>
-              <span className="inline-flex items-center gap-1"><FileText size={12} />{dossier.type_affaire}</span>
+              <span className="inline-flex items-center gap-1"><FileText size={12} />{dossier.type_affaire_libelle}</span>
             </div>
           </div>
           <div className="flex gap-2 shrink-0 pt-1">
-            {(dossier.statut === "nouveau" || dossier.statut === "en_attente") && (
+            {(dossier.statut === "en_attente") && (
               <button
                 onClick={() => setShowAffectation(true)}
                 className="inline-flex items-center gap-1.5 h-10 px-4 bg-primary text-primary-foreground rounded text-[13px] font-semibold hover:bg-sidebar-accent transition-colors"
               >
                 <CheckCircle size={14} />Affecter le dossier
-              </button>
-            )}
-            {dossier.statut === "affecte" && (
-              <button className="inline-flex items-center gap-1.5 h-10 px-4 bg-primary text-primary-foreground rounded text-[13px] font-semibold hover:bg-sidebar-accent transition-colors">
-                <Play size={14} />Marquer en cours
               </button>
             )}
           </div>
@@ -142,23 +144,17 @@ export default function DossierDetail() {
                 </SectionCard>
               )}
               <SectionCard title="Client">
-                {client && (
-                  <div className="flex items-start gap-3.5">
-                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${client.type_client === "PHYSIQUE" ? "bg-blue-100" : "bg-purple-100"}`}>
-                      <User size={18} className={client.type_client === "PHYSIQUE" ? "text-primary" : "text-purple-700"} />
-                    </div>
-                    <div>
-                      <div className="text-sm font-semibold text-foreground mb-0.5">{client.nom}</div>
-                      <div className="text-xs text-muted-foreground mb-2.5">
-                        {client.type_client === "PHYSIQUE" ? "Personne physique" : "Personne morale"}
-                      </div>
-                      <div className="flex gap-6 flex-wrap">
-                        {client.nin && <InfoPair label="NIN" value={client.nin} />}
-                        {client.rccm && <InfoPair label="RCCM" value={client.rccm} />}
-                      </div>
+                <div className="flex items-start gap-3.5">
+                  <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 bg-blue-100">
+                    <User size={18} className="text-primary" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-semibold text-foreground mb-0.5">{dossier.client_nom ?? "—"}</div>
+                    <div className="text-xs text-muted-foreground">
+                      Client associé au dossier
                     </div>
                   </div>
-                )}
+                </div>
               </SectionCard>
               <SectionCard title="Dernières actions" action={<button className="text-xs text-primary font-medium flex items-center gap-1">Voir tout <ChevronRight size={13} /></button>}>
                 <div className="flex flex-col">
@@ -225,8 +221,8 @@ export default function DossierDetail() {
               <SectionCard title="Informations">
                 <div className="flex flex-col gap-2.5">
                   <InfoPair label="Référence" value={dossier.reference} mono />
-                  <InfoPair label="Type d'affaire" value={dossier.type_affaire} />
-                  <InfoPair label="Agence réceptrice" value={getAgence(dossier.agence_receptrice_id)?.nom ?? "—"} />
+                  <InfoPair label="Type d'affaire" value={dossier.type_affaire_libelle} />
+                  <InfoPair label="Agence réceptrice" value={dossier.agence_receptrice_nom ?? "—"} />
                 </div>
               </SectionCard>
             </div>

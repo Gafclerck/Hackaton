@@ -3,6 +3,7 @@ import { ArrowRightLeft } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../ui/Dialog";
 import { Button } from "../ui/Button";
 import { Textarea } from "../ui/Textarea";
+import { dossierService } from "../../services/dossierService";
 
 export default function TransferModal({ dossier, open, onClose, onConfirm }) {
   const [resetKey, setResetKey] = useState(0);
@@ -33,11 +34,19 @@ export default function TransferModal({ dossier, open, onClose, onConfirm }) {
 
 function TransferBody({ dossier, onClose, onConfirm }) {
   const [motif, setMotif] = useState("");
-  const canSubmit = motif.trim().length > 0;
+  const [submitting, setSubmitting] = useState(false);
+  const canSubmit = motif.trim().length > 0 && !submitting;
 
-  function handleSubmit() {
-    if (canSubmit) {
+  async function handleSubmit() {
+    if (!canSubmit || !dossier) return;
+    setSubmitting(true);
+    try {
+      await dossierService.transfer(dossier.id, motif.trim());
       onConfirm(motif.trim());
+    } catch (err) {
+      console.error("Erreur transfert:", err);
+    } finally {
+      setSubmitting(false);
     }
   }
 

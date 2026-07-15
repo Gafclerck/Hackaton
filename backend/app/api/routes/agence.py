@@ -2,6 +2,7 @@ from fastapi import APIRouter, Query, status
 from typing import List
 
 from app.schemas.agence import AgenceCreate, AgenceUpdate, AgenceResponse
+from app.schemas.user import UserResponse
 from app.core.deps import SessionDep, CurrentUser, RequireChefCentral
 from app.services.agence_service import create_agence, get_agence_by_id, list_agences, update_agence
 
@@ -31,3 +32,10 @@ def read_one(agence_id: int, db: SessionDep, current_user: CurrentUser) -> Agenc
 @router.patch("/{agence_id}")
 def patch(agence_id: int, data: AgenceUpdate, db: SessionDep, current_user: RequireChefCentral) -> AgenceResponse:
     return update_agence(db, agence_id, data)
+
+
+@router.get("/{agence_id}/users")
+def list_users_by_agence(agence_id: int, db: SessionDep, current_user: CurrentUser) -> List[UserResponse]:
+    from app.models.User import User
+    users = db.query(User).filter(User.agence_id == agence_id, User.actif == True).all()
+    return [UserResponse.model_validate(u) for u in users]

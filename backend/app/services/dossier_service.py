@@ -8,6 +8,7 @@ from app.models.Client import Client
 from app.models.Agence import Agence
 from app.models.TypeAffaire import TypeAffaire
 from app.schemas.dossier import DossierCreate, DossierAffectation, DossierStatutUpdate, DossierRead
+from app.models.HistoriqueAction import HistoriqueAction
 
 
 # Transitions de statut autorisees
@@ -62,24 +63,48 @@ def _generate_reference(db: Session) -> str:
     return f"{prefixe}{num:05d}"
 
 
-def _verify_foreign_keys(data: DossierCreate, db: Session) -> None:
+def _verify_foreign_keys(data: DossierCreate, db: Session, agence_receptrice_id: int, avocat_en_chef_id: int) -> None:
     if not db.query(Client).filter(Client.id == data.client_id).first():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Client non trouve")
-    if not db.query(Agence).filter(Agence.id == data.agence_receptrice_id).first():
+    if not db.query(Agence).filter(Agence.id == agence_receptrice_id).first():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Agence receptrice non trouvee")
-    if not db.query(User).filter(User.id == data.avocat_en_chef_id).first():
+    if not db.query(User).filter(User.id == avocat_en_chef_id).first():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Avocat en chef non trouve")
     if not db.query(TypeAffaire).filter(TypeAffaire.id == data.type_affaire_id).first():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Type d'affaire non trouve")
 
 
 def create_dossier(data: DossierCreate, user: User, db: Session) -> DossierRead:
-    _verify_foreign_keys(data, db)
+    agence_receptrice_id = user.agence_id
+    if not agence_receptrice_id:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="L'utilisateur n'est lie a aucune agence",
+        )
+    
+    if data.avocat_en_chef_id:
+        avocat_en_chef_id = data.avocat_en_chef_id
+    elif user.role == UserRole.CHEF_AGENCE or user.role == UserRole.CHEF_CENTRAL:
+        avocat_en_chef_id = user.id
+    else:
+        chef = (
+            db.query(User)
+            .filter(User.agence_id == agence_receptrice_id, User.role == UserRole.CHEF_AGENCE, User.actif == True)
+            .first()
+        )
+        if not chef:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Aucun chef d'agence trouve pour cette agence",
+            )
+        avocat_en_chef_id = chef.id
+
+    _verify_foreign_keys(data, db, agence_receptrice_id, avocat_en_chef_id)
     reference = _generate_reference(db)
     dossier = Dossier(
         client_id=data.client_id,
-        agence_receptrice_id=data.agence_receptrice_id,
-        avocat_en_chef_id=data.avocat_en_chef_id,
+        agence_receptrice_id=agence_receptrice_id,
+        avocat_en_chef_id=avocat_en_chef_id,
         type_affaire_id=data.type_affaire_id,
         reference=reference,
         titre=data.titre,
@@ -168,6 +193,35 @@ def update_statut(dossier_id: int, data: DossierStatutUpdate, db: Session) -> Do
     if data.statut == StatutDossier.TERMINE:
         dossier.date_cloture = datetime.now(timezone.utc)
 
+    db.commit()
+    db.refresh(dossier)
+    return _to_read(dossier)
+
+
+def transfer_dossier(dossier_id: int, motif: str, user: User, db: Session) -> DossierRead:
+    dossier = db.query(Dossier).filter(Dossier.id == dossier_id).first()
+    if not dossier:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dossier non trouve")
+    if dossier.statut == StatutDossier.ARCHIVE:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Impossible de transferer un dossier archive")
+
+    ancien_statut = dossier.statut.value
+    ancienne_agence = dossier.agence_assigne_id
+
+    dossier.statut = StatutDossier.EN_ATTENTE_AFFECTATION
+    dossier.agence_assigne_id = None
+    dossier.avocat_assigne_id = None
+    dossier.date_affectation = None
+
+    historique = HistoriqueAction(
+        dossier_id=dossier_id,
+        user_id=user.id,
+        action="transfert",
+        ancienne_valeur={"statut": ancien_statut, "agence_assigne_id": ancienne_agence},
+        nouvelle_valeur={"statut": StatutDossier.EN_ATTENTE_AFFECTATION.value},
+        commentaire=motif,
+    )
+    db.add(historique)
     db.commit()
     db.refresh(dossier)
     return _to_read(dossier)

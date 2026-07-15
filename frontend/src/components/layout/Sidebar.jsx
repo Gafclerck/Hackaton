@@ -5,6 +5,7 @@ import {
   ListOrdered,
   Building2,
   Users,
+  Contact,
   BookOpen,
   Settings,
   LogOut,
@@ -15,6 +16,7 @@ import { useAuth } from "../../hooks/useAuth";
 const ALL_NAV = [
   { id: "dashboard",    label: "Tableau de bord",   icon: LayoutDashboard },
   { id: "dossiers",     label: "Dossiers",           icon: FolderOpen },
+  { id: "clients",      label: "Clients",            icon: Contact },
   { id: "file",         label: "File d'affectation", icon: ListOrdered },
   { id: "agences",      label: "Agences",            icon: Building2 },
   { id: "utilisateurs", label: "Utilisateurs",       icon: Users },
@@ -23,9 +25,9 @@ const ALL_NAV = [
 ];
 
 const NAV_BY_ROLE = {
-  [ROLES.chef_central]:  ["dashboard", "dossiers", "file", "agences", "utilisateurs", "specialites", "parametres"],
-  [ROLES.chef_agence]:   ["dashboard", "dossiers", "file", "parametres"],
-  [ROLES.avocat]:        ["dashboard", "dossiers", "parametres"],
+  [ROLES.chef_central]:  ["dashboard", "dossiers", "clients", "file", "agences", "utilisateurs", "specialites", "parametres"],
+  [ROLES.chef_agence]:   ["dashboard", "dossiers", "clients", "file", "parametres"],
+  [ROLES.avocat]:        ["dashboard", "dossiers", "clients", "parametres"],
 };
 
 export default function Sidebar({ user }) {

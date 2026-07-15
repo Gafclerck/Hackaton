@@ -9,7 +9,11 @@ import DossiersList from "../pages/Dossiers";
 import DossierDetail from "../pages/Dossiers/Detail";
 import FileAffectation from "../pages/FileAffectation";
 import Clients from "../pages/Clients";
-import ClientDetail from "../pages/ClientDetail";
+import ClientDetail from "../pages/Clients/Detail";
+import Agences from "../pages/Agences";
+import AgenceDetail from "../pages/Agences/Detail";
+import Utilisateurs from "../pages/Utilisateurs";
+import UtilisateurDetail from "../pages/Utilisateurs/Detail";
 import PlaceholderPage from "../pages/PlaceholderPage";
 
 function PublicRoute({ children }) {
@@ -24,9 +28,7 @@ export default function AppRouter() {
     <BrowserRouter>
       <AuthProvider>
         <Routes>
-          <Route
-            path="/login"
-            element={
+          <Route path="/login" element={
               <PublicRoute>
                 <Login />
               </PublicRoute>
@@ -41,8 +43,10 @@ export default function AppRouter() {
             <Route path="file" element={<FileAffectation />} />
             <Route path="clients" element={<Clients />} />
             <Route path="clients/:id" element={<ClientDetail />} />
-            <Route path="agences" element={<PlaceholderPage pageId="agences" />} />
-            <Route path="utilisateurs" element={<PlaceholderPage pageId="utilisateurs" />} />
+            <Route path="agences" element={<Agences />} />
+            <Route path="agences/:id" element={<AgenceDetail />} />
+            <Route path="utilisateurs" element={<Utilisateurs />} />
+            <Route path="utilisateurs/:id" element={<UtilisateurDetail />} />
             <Route path="specialites" element={<PlaceholderPage pageId="specialites" />} />
             <Route path="parametres" element={<PlaceholderPage pageId="parametres" />} />
           </Route>

@@ -1,25 +1,30 @@
-import { useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Mail, Phone, CreditCard, FileText, Trash2 } from "lucide-react";
-import { clients, dossiers } from "../data/mockData";
-import { TYPE_CLIENT_LABELS } from "../lib/constants";
-import { formatDate } from "../lib/utils";
-import Card, { CardContent, CardHeader, CardTitle } from "../components/ui/Card";
-import Badge from "../components/ui/Badge";
-import Button from "../components/ui/Button";
-import Avatar from "../components/ui/Avatar";
-import StatusBadge from "../components/ui/StatusBadge";
-import {
-  Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
-} from "../components/ui/Dialog";
+import { ArrowLeft, Mail, Phone, CreditCard, FileText } from "lucide-react";
+import { useClient } from "../../hooks/useClients";
+import { useDossiers } from "../../hooks/useDossiers";
+import { TYPE_CLIENT_LABELS } from "../../lib/constants";
+import { formatDate } from "../../lib/utils";
+import Card, { CardContent, CardHeader, CardTitle } from "../../components/ui/Card";
+import Badge from "../../components/ui/Badge";
+import Button from "../../components/ui/Button";
+import Avatar from "../../components/ui/Avatar";
+import StatusBadge from "../../components/ui/StatusBadge";
 
 export default function ClientDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [showDelete, setShowDelete] = useState(false);
+  const { data: client, loading: clientLoading } = useClient(id);
+  const { data: dossiers = [] } = useDossiers();
 
-  const client = clients.find((c) => c.id === id);
-  const clientDossiers = dossiers.filter((d) => d.client_id === id);
+  const clientDossiers = dossiers.filter((d) => d.client_id === Number(id));
+
+  if (clientLoading) {
+    return (
+      <div className="flex-1 flex items-center justify-center bg-background">
+        <p className="text-sm text-muted-foreground">Chargement...</p>
+      </div>
+    );
+  }
 
   if (!client) {
     return (
@@ -33,6 +38,8 @@ export default function ClientDetail() {
       </div>
     );
   }
+
+  const displayType = client.type_client === "physique" ? "PHYSIQUE" : "MORALE";
 
   return (
     <div className="flex-1 overflow-y-auto p-8 pb-20 bg-background">
@@ -49,14 +56,10 @@ export default function ClientDetail() {
           <Avatar nom={client.nom} size={56} />
           <div className="flex-1 min-w-0">
             <h1 className="text-xl font-bold text-foreground mb-1">{client.nom}</h1>
-            <Badge variant={client.type_client === "PHYSIQUE" ? "secondary" : "info"}>
-              {TYPE_CLIENT_LABELS[client.type_client]}
+            <Badge variant={displayType === "PHYSIQUE" ? "secondary" : "info"}>
+              {TYPE_CLIENT_LABELS[displayType]}
             </Badge>
           </div>
-          <Button variant="destructive" onClick={() => setShowDelete(true)}>
-            <Trash2 size={16} />
-            Supprimer
-          </Button>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5 mb-6">
@@ -163,25 +166,6 @@ export default function ClientDetail() {
             )}
           </CardContent>
         </Card>
-
-        <Dialog open={showDelete} onOpenChange={setShowDelete}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Confirmer la suppression</DialogTitle>
-              <DialogDescription>
-                Voulez-vous vraiment supprimer le client {client.nom} ? Cette action est irreversible.
-              </DialogDescription>
-            </DialogHeader>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setShowDelete(false)}>
-                Annuler
-              </Button>
-              <Button variant="destructive" onClick={() => { setShowDelete(false); navigate("/clients"); }}>
-                Supprimer
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </div>
     </div>
   );

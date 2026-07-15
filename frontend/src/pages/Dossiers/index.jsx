@@ -4,7 +4,9 @@ import {
   Search, X, ChevronDown, ChevronUp,
   ChevronLeft, ChevronRight, RotateCcw,
 } from "lucide-react";
-import { dossiers, agences, utilisateurs, getClient, getAgence, getUtilisateur } from "../../data/mockData";
+import { useDossiers } from "../../hooks/useDossiers";
+import { useAgences } from "../../hooks/useAgences";
+import { useUsers } from "../../hooks/useUsers";
 import { STATUT_LABELS } from "../../lib/constants";
 import StatusBadge from "../../components/ui/StatusBadge";
 import PrioriteStars from "../../components/ui/PrioriteStars";
@@ -61,6 +63,9 @@ function FilterChip({ label, onRemove }) {
 
 export default function DossiersList() {
   const navigate = useNavigate();
+  const { data: dossiers = [], loading } = useDossiers();
+  const { data: agences = [] } = useAgences();
+  const { data: utilisateurs = [] } = useUsers();
   const [search, setSearch] = useState("");
   const [filterStatut, setFilterStatut] = useState("");
   const [filterAgence, setFilterAgence] = useState("");
@@ -88,12 +93,12 @@ export default function DossiersList() {
       data = data.filter((d) =>
         d.reference.toLowerCase().includes(q) ||
         d.titre.toLowerCase().includes(q) ||
-        (getClient(d.client_id)?.nom.toLowerCase().includes(q) ?? false)
+        (d.client_nom?.toLowerCase().includes(q) ?? false)
       );
     }
     if (filterStatut)   data = data.filter((d) => d.statut === filterStatut);
-    if (filterAgence)   data = data.filter((d) => (d.agence_assigne_id || d.agence_receptrice_id) === filterAgence);
-    if (filterAvocat)   data = data.filter((d) => d.avocat_assigne_id === filterAvocat);
+    if (filterAgence)   data = data.filter((d) => (d.agence_assigne_id || d.agence_receptrice_id) === Number(filterAgence));
+    if (filterAvocat)   data = data.filter((d) => d.avocat_assigne_id === Number(filterAvocat));
     if (filterPriorite) data = data.filter((d) => String(d.priorite) === filterPriorite);
 
     data.sort((a, b) => {
@@ -101,19 +106,19 @@ export default function DossiersList() {
       switch (sortCol) {
         case "reference":    va = a.reference;    vb = b.reference;    break;
         case "titre":        va = a.titre;        vb = b.titre;        break;
-        case "client":       va = getClient(a.client_id)?.nom ?? "";  vb = getClient(b.client_id)?.nom ?? "";  break;
-        case "type_affaire": va = a.type_affaire; vb = b.type_affaire; break;
-        case "agence":       va = getAgence(a.agence_assigne_id || a.agence_receptrice_id)?.nom ?? ""; vb = getAgence(b.agence_assigne_id || b.agence_receptrice_id)?.nom ?? ""; break;
-        case "avocat":       va = getUtilisateur(a.avocat_assigne_id)?.nom ?? ""; vb = getUtilisateur(b.avocat_assigne_id)?.nom ?? ""; break;
+        case "client":       va = a.client_nom ?? "";  vb = b.client_nom ?? "";  break;
+        case "type_affaire": va = a.type_affaire_libelle ?? ""; vb = b.type_affaire_libelle ?? ""; break;
+        case "agence":       va = a.agence_assigne_nom ?? a.agence_receptrice_nom ?? ""; vb = b.agence_assigne_nom ?? b.agence_receptrice_nom ?? ""; break;
+        case "avocat":       va = a.avocat_assigne_nom ?? ""; vb = b.avocat_assigne_nom ?? ""; break;
         case "statut":       va = a.statut;       vb = b.statut;       break;
         case "priorite":     return sortDir === "asc" ? a.priorite - b.priorite : b.priorite - a.priorite;
-        case "ia":           va = a.analyse_ia ? "1" : "0"; vb = b.analyse_ia ? "1" : "0"; break;
+        case "ia":           va = "0"; vb = "0"; break;
       }
       const cmp = va.localeCompare(vb, "fr");
       return sortDir === "asc" ? cmp : -cmp;
     });
     return data;
-  }, [search, filterStatut, filterAgence, filterAvocat, filterPriorite, sortCol, sortDir]);
+  }, [dossiers, search, filterStatut, filterAgence, filterAvocat, filterPriorite, sortCol, sortDir]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
   const pageData = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
@@ -127,6 +132,7 @@ export default function DossiersList() {
           <h1 className="text-xl font-bold text-foreground mb-0.5">Dossiers</h1>
           <p className="text-[13px] text-muted-foreground">
             {filtered.length} dossier{filtered.length !== 1 ? "s" : ""}{hasFilters ? " · Filtres actifs" : " au total"}
+            {loading && " · Chargement..."}
           </p>
         </div>
 
@@ -171,8 +177,8 @@ export default function DossiersList() {
 
           <div className="ml-auto flex gap-1.5 flex-wrap">
             {filterStatut   && <FilterChip label={STATUT_LABELS[filterStatut]} onRemove={() => setFilterStatut("")} />}
-            {filterAgence   && <FilterChip label={agences.find((a) => a.id === filterAgence)?.nom ?? ""} onRemove={() => setFilterAgence("")} />}
-            {filterAvocat   && <FilterChip label={utilisateurs.find((u) => u.id === filterAvocat)?.nom ?? ""} onRemove={() => setFilterAvocat("")} />}
+            {filterAgence   && <FilterChip label={agences.find((a) => a.id === Number(filterAgence))?.nom ?? ""} onRemove={() => setFilterAgence("")} />}
+            {filterAvocat   && <FilterChip label={utilisateurs.find((u) => u.id === Number(filterAvocat))?.nom ?? ""} onRemove={() => setFilterAvocat("")} />}
             {filterPriorite && <FilterChip label={`P${filterPriorite} — ${PRIORITE_LABELS[Number(filterPriorite)]}`} onRemove={() => setFilterPriorite("")} />}
           </div>
         </div>
@@ -197,9 +203,6 @@ export default function DossiersList() {
           </thead>
           <tbody>
             {pageData.map((d, idx) => {
-              const client = getClient(d.client_id);
-              const avocat = getUtilisateur(d.avocat_assigne_id);
-              const agence = getAgence(d.agence_assigne_id || d.agence_receptrice_id);
               const isEven = idx % 2 === 0;
               return (
                 <tr key={d.reference}
@@ -208,19 +211,16 @@ export default function DossiersList() {
                     ${isEven ? "bg-card" : "bg-background"}`}>
                   <td className="px-4 py-3 text-xs font-semibold text-primary tabular-nums">{d.reference}</td>
                   <td className="px-4 py-3 text-[13px] text-foreground line-clamp-2 leading-snug">{d.titre}</td>
-                  <td className="px-4 py-3 text-[13px] text-foreground truncate">{client?.nom ?? "—"}</td>
-                  <td className="px-4 py-3 text-xs text-muted-foreground truncate">{d.type_affaire}</td>
-                  <td className="px-4 py-3 text-xs text-muted-foreground truncate">{agence?.nom ?? "—"}</td>
+                  <td className="px-4 py-3 text-[13px] text-foreground truncate">{d.client_nom ?? "—"}</td>
+                  <td className="px-4 py-3 text-xs text-muted-foreground truncate">{d.type_affaire_libelle}</td>
+                  <td className="px-4 py-3 text-xs text-muted-foreground truncate">{d.agence_assigne_nom ?? d.agence_receptrice_nom ?? "—"}</td>
                   <td className="px-4 py-3 text-xs truncate">
-                    {avocat ? <span className="text-foreground">{avocat.nom}</span> : <span className="text-border">Non affecté</span>}
+                    {d.avocat_assigne_nom ? <span className="text-foreground">{d.avocat_assigne_nom}</span> : <span className="text-border">Non affecté</span>}
                   </td>
                   <td className="px-4 py-3"><StatusBadge statut={d.statut} /></td>
                   <td className="px-4 py-3"><PrioriteStars priorite={d.priorite} /></td>
                   <td className="px-4 py-3">
-                    {d.analyse_ia
-                      ? <span className="inline-flex items-center gap-1 text-accent text-[11px] font-medium">✓ Analysé</span>
-                      : <span className="text-muted-foreground text-[11px]">— Non analysé</span>
-                    }
+                    <span className="text-muted-foreground text-[11px]">—</span>
                   </td>
                 </tr>
               );

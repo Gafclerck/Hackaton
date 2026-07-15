@@ -6,7 +6,9 @@ import {
   ChevronRight, AlertTriangle,
 } from "lucide-react";
 import { useAuth } from "../../hooks/useAuth";
-import { dossiers, agences, utilisateurs, getClient } from "../../data/mockData";
+import { useDossiers } from "../../hooks/useDossiers";
+import { useAgences } from "../../hooks/useAgences";
+import { useUsers } from "../../hooks/useUsers";
 import { ROLE_LABELS, isActif } from "../../lib/constants";
 import { getGreeting } from "../../lib/utils";
 import Avatar from "../../components/ui/Avatar";
@@ -16,13 +18,16 @@ import StatusBadge from "../../components/ui/StatusBadge";
 
 function GerantCentralDashboard() {
   const navigate = useNavigate();
-  const actifs = useMemo(() => dossiers.filter((d) => isActif(d.statut)), []);
+  const { data: dossiers = [] } = useDossiers();
+  const { data: agences = [] } = useAgences();
+  const { data: utilisateurs = [] } = useUsers();
+  const actifs = useMemo(() => dossiers.filter((d) => isActif(d.statut)), [dossiers]);
 
   const chargeParAgence = useMemo(() =>
     agences.map((a) => ({
       id: a.id, nom: a.ville, nomComplet: a.nom,
       count: actifs.filter((d) => (d.agence_assigne_id || d.agence_receptrice_id) === a.id).length,
-    })), [actifs]);
+    })), [actifs, agences]);
 
   const repartitionAvocats = useMemo(() => {
     const avs = utilisateurs.filter((u) => u.role === "avocat" || u.role === "chef_agence");
@@ -30,9 +35,9 @@ function GerantCentralDashboard() {
       ...av,
       dossiersActifs: actifs.filter((d) => d.avocat_assigne_id === av.id).length,
     })).sort((a, b) => b.dossiersActifs - a.dossiersActifs);
-  }, [actifs]);
+  }, [actifs, utilisateurs]);
 
-  const transfertsPendants = useMemo(() => dossiers.filter((d) => d.statut === "transfert_demande"), []);
+  const transfertsPendants = useMemo(() => dossiers.filter((d) => d.statut === "en_attente_affectation"), [dossiers]);
   const urgents = actifs.filter((d) => d.priorite >= 4).length;
   const enAttente = actifs.filter((d) => d.statut === "en_attente").length;
   const enCours = actifs.filter((d) => d.statut === "en_cours").length;
@@ -117,7 +122,7 @@ function GerantCentralDashboard() {
             ) : (
               <div className="flex flex-col">
                 {transfertsPendants.map((d, i) => {
-                  const cli = getClient(d.client_id);
+                  const cli = d.client_nom;
                   return (
                     <div key={d.reference}
                       onClick={() => navigate(`/dossiers/${d.reference}`)}
@@ -129,7 +134,7 @@ function GerantCentralDashboard() {
                           <StatusBadge statut={d.statut} />
                         </div>
                         <div className="text-[13px] font-semibold text-foreground truncate">{d.titre}</div>
-                        {cli && <div className="text-[11px] text-muted-foreground mt-0.5">{cli.nom}</div>}
+                        {cli && <div className="text-[11px] text-muted-foreground mt-0.5">{cli}</div>}
                         {d.motif_transfert && (
                           <div className="text-[11px] text-muted-foreground mt-1 px-2 py-1 bg-background rounded border-l-2 border-status-transfert-text">
                             « {d.motif_transfert} »
@@ -180,17 +185,20 @@ function GerantCentralDashboard() {
 function AvocatEnChefDashboard({ user }) {
   const navigate = useNavigate();
   const monAgenceId = user.agence_id;
+  const { data: dossiers = [] } = useDossiers();
+  const { data: agences = [] } = useAgences();
+  const { data: utilisateurs = [] } = useUsers();
   const monAgence = agences.find((a) => a.id === monAgenceId);
 
   const fileAttente = useMemo(() =>
     dossiers.filter((d) => d.statut === "en_attente" && d.agence_receptrice_id === monAgenceId)
-      .sort((a, b) => b.priorite - a.priorite), [monAgenceId]);
+      .sort((a, b) => b.priorite - a.priorite), [dossiers, monAgenceId]);
 
   const transfertsATraiter = useMemo(() =>
-    dossiers.filter((d) => d.statut === "transfert_demande" && (d.agence_assigne_id || d.agence_receptrice_id) === monAgenceId), [monAgenceId]);
+    dossiers.filter((d) => d.statut === "en_attente_affectation" && (d.agence_assigne_id || d.agence_receptrice_id) === monAgenceId), [dossiers, monAgenceId]);
 
   const dossiersAgence = useMemo(() =>
-    dossiers.filter((d) => isActif(d.statut) && (d.agence_assigne_id || d.agence_receptrice_id) === monAgenceId), [monAgenceId]);
+    dossiers.filter((d) => isActif(d.statut) && (d.agence_assigne_id || d.agence_receptrice_id) === monAgenceId), [dossiers, monAgenceId]);
 
   const chargeAgence = useMemo(() => {
     const avs = utilisateurs.filter((u) => (u.role === "avocat" || u.role === "chef_agence") && u.agence_id === monAgenceId);
@@ -198,7 +206,7 @@ function AvocatEnChefDashboard({ user }) {
       ...av,
       dossiersActifs: dossiersAgence.filter((d) => d.avocat_assigne_id === av.id).length,
     })).sort((a, b) => b.dossiersActifs - a.dossiersActifs);
-  }, [dossiersAgence, monAgenceId]);
+  }, [dossiersAgence, utilisateurs, monAgenceId]);
 
   return (
     <div className="flex-1 overflow-y-auto p-8 pb-20 bg-background">
@@ -233,7 +241,6 @@ function AvocatEnChefDashboard({ user }) {
             ) : (
               <div className="flex flex-col">
                 {fileAttente.slice(0, 3).map((d, i) => {
-                  const cli = getClient(d.client_id);
                   const prioriteHaute = d.priorite >= 4;
                   return (
                     <div key={d.reference} onClick={() => navigate(`/dossiers/${d.reference}`)}
@@ -246,7 +253,7 @@ function AvocatEnChefDashboard({ user }) {
                           {prioriteHaute && <span className="text-[10px] font-semibold text-warning bg-status-attente-bg rounded-full px-1.5 py-0.5">Priorité haute</span>}
                         </div>
                         <div className="text-[13px] font-semibold text-foreground truncate mb-0.5">{d.titre}</div>
-                        <div className="text-[11px] text-muted-foreground">{d.type_affaire}{cli ? ` · ${cli.nom}` : ""}</div>
+                        <div className="text-[11px] text-muted-foreground">{d.type_affaire_libelle}{d.client_nom ? ` · ${d.client_nom}` : ""}</div>
                         <div className="flex items-center gap-1 mt-1.5">
                           <Clock size={11} className="text-muted-foreground" />
                           <span className="text-[11px] text-muted-foreground">En attente</span>
@@ -270,7 +277,6 @@ function AvocatEnChefDashboard({ user }) {
               ) : (
                 <div className="flex flex-col">
                   {transfertsATraiter.map((d, i) => {
-                    const cli = getClient(d.client_id);
                     return (
                       <div key={d.reference} onClick={() => navigate(`/dossiers/${d.reference}`)}
                         className={`flex items-center gap-3.5 py-3 cursor-pointer hover:opacity-75 transition-opacity ${i > 0 ? "border-t border-border" : ""}`}>
@@ -279,7 +285,7 @@ function AvocatEnChefDashboard({ user }) {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="text-[13px] font-semibold text-foreground truncate">{d.titre}</div>
-                          <div className="text-[11px] text-muted-foreground mt-0.5">{d.reference}{cli ? ` · ${cli.nom}` : ""}</div>
+                          <div className="text-[11px] text-muted-foreground mt-0.5">{d.reference}{d.client_nom ? ` · ${d.client_nom}` : ""}</div>
                         </div>
                         <ArrowRight size={14} className="text-muted-foreground shrink-0" />
                       </div>
@@ -357,10 +363,12 @@ function AvocatEnChefDashboard({ user }) {
 
 function AvocatDashboard({ user }) {
   const navigate = useNavigate();
+  const { data: dossiers = [] } = useDossiers();
+  const { data: agences = [] } = useAgences();
 
   const mesDossiers = useMemo(() =>
     dossiers.filter((d) => d.avocat_assigne_id === user.id && isActif(d.statut))
-      .sort((a, b) => b.priorite - a.priorite), [user.id]);
+      .sort((a, b) => b.priorite - a.priorite), [dossiers, user.id]);
 
   const salutation = getGreeting();
   const prenom = user.nom?.split(" ")[0] || user.nom;
@@ -419,7 +427,6 @@ function AvocatDashboard({ user }) {
           ) : (
             <div className="flex flex-col">
               {mesDossiers.map((d, i) => {
-                const cli = getClient(d.client_id);
                 const prioriteColor = d.priorite >= 4 ? "bg-warning" : d.priorite >= 3 ? "bg-primary" : "bg-border";
                 return (
                   <div key={d.reference} onClick={() => navigate(`/dossiers/${d.reference}`)}
@@ -432,8 +439,8 @@ function AvocatDashboard({ user }) {
                       </div>
                       <div className="text-sm font-semibold text-foreground truncate mb-1">{d.titre}</div>
                       <div className="flex items-center gap-3 flex-wrap">
-                        <span className="text-xs text-muted-foreground">{d.type_affaire}</span>
-                        {cli && <span className="text-xs text-muted-foreground">· {cli.nom}</span>}
+                        <span className="text-xs text-muted-foreground">{d.type_affaire_libelle}</span>
+                        {d.client_nom && <span className="text-xs text-muted-foreground">· {d.client_nom}</span>}
                         <span className="text-[10px] text-muted-foreground">{'★'.repeat(d.priorite)}{'☆'.repeat(5 - d.priorite)}</span>
                       </div>
                     </div>

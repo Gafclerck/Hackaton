@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Search, Building2, MapPin, Briefcase, UserCheck, Sparkles } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "../ui/Dialog";
 import { Button } from "../ui/Button";
@@ -7,10 +7,12 @@ import { Badge } from "../ui/Badge";
 import { Input } from "../ui/Input";
 import { cn } from "../../lib/utils";
 import { ROLE_LABELS, STATUT_LABELS, STATUT_STYLES } from "../../lib/constants";
-import { agences, utilisateurs } from "../../data/mockData";
+import { useAgences } from "../../hooks/useAgences";
+import { agenceService } from "../../services/agenceService";
+import { dossierService } from "../../services/dossierService";
 
 function DossierReminder({ dossier }) {
-  const statutStyle = STATUT_STYLES[dossier.statut] || STATUT_STYLES.nouveau;
+  const statutStyle = STATUT_STYLES[dossier.statut] || STATUT_STYLES.en_attente;
   return (
     <div className="rounded-lg border border-border bg-background p-4 space-y-2">
       <div className="flex items-center justify-between">
@@ -21,7 +23,7 @@ function DossierReminder({ dossier }) {
       </div>
       <p className="text-sm font-medium text-foreground line-clamp-2">{dossier.titre}</p>
       <div className="flex items-center gap-2">
-        <Badge variant="secondary" className="text-[10px]">{dossier.type_affaire}</Badge>
+        <Badge variant="secondary" className="text-[10px]">{dossier.type_affaire_libelle}</Badge>
         <span className="text-[11px] text-muted-foreground">P{dossier.priorite}</span>
       </div>
     </div>
@@ -60,12 +62,23 @@ export default function AffectationModal({ dossier, open, onClose, onConfirm, in
 }
 
 function AffectationBody({ dossier, onClose, onConfirm, initialAgenceId, initialAvocatId }) {
+  const { data: agences = [] } = useAgences();
   const [selectedAgence, setSelectedAgence] = useState(initialAgenceId || null);
   const [selectedAvocat, setSelectedAvocat] = useState(initialAvocatId || null);
   const [agenceSearch, setAgenceSearch] = useState("");
   const [avocatSearch, setAvocatSearch] = useState("");
+  const [agenceUsers, setAgenceUsers] = useState([]);
 
   const hasIASuggestion = Boolean(initialAgenceId || initialAvocatId);
+
+  useEffect(() => {
+    if (!selectedAgence) { setAgenceUsers([]); return; }
+    let cancelled = false;
+    agenceService.getUsers(selectedAgence)
+      .then((users) => { if (!cancelled) setAgenceUsers(users); })
+      .catch(() => { if (!cancelled) setAgenceUsers([]); });
+    return () => { cancelled = true; };
+  }, [selectedAgence]);
 
   const filteredAgences = useMemo(() => {
     if (!agenceSearch) return agences;
@@ -73,25 +86,36 @@ function AffectationBody({ dossier, onClose, onConfirm, initialAgenceId, initial
     return agences.filter(
       (a) => a.nom.toLowerCase().includes(q) || a.ville.toLowerCase().includes(q)
     );
-  }, [agenceSearch]);
+  }, [agences, agenceSearch]);
 
   const avocatsForAgence = useMemo(() => {
-    if (!selectedAgence) return [];
-    const filtered = utilisateurs.filter(
-      (u) => ["avocat", "chef_agence"].includes(u.role) && u.agence_id === selectedAgence
+    const filtered = agenceUsers.filter(
+      (u) => ["avocat", "chef_agence"].includes(u.role)
     );
     if (!avocatSearch) return filtered;
     const q = avocatSearch.toLowerCase();
     return filtered.filter(
       (u) => u.nom.toLowerCase().includes(q) || u.prenom.toLowerCase().includes(q)
     );
-  }, [selectedAgence, avocatSearch]);
+  }, [agenceUsers, avocatSearch]);
 
-  const canConfirm = selectedAgence && selectedAvocat;
+  const [submitting, setSubmitting] = useState(false);
 
-  function handleConfirm() {
-    if (canConfirm) {
+  const canConfirm = selectedAgence && selectedAvocat && !submitting;
+
+  async function handleConfirm() {
+    if (!canConfirm || !dossier) return;
+    setSubmitting(true);
+    try {
+      await dossierService.affecter(dossier.id, {
+        agence_assigne_id: selectedAgence,
+        avocat_assigne_id: selectedAvocat,
+      });
       onConfirm(selectedAgence, selectedAvocat);
+    } catch (err) {
+      console.error("Erreur affectation:", err);
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -229,7 +253,7 @@ function AffectationBody({ dossier, onClose, onConfirm, initialAgenceId, initial
         <Button variant="outline" onClick={onClose}>Annuler</Button>
         <Button onClick={handleConfirm} disabled={!canConfirm}>
           <UserCheck size={14} />
-          Confirmer
+            Confirmer
         </Button>
       </DialogFooter>
     </>
