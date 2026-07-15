@@ -8,6 +8,8 @@ import Dashboard from "../pages/Dashboard";
 import DossiersList from "../pages/Dossiers";
 import DossierDetail from "../pages/Dossiers/Detail";
 import FileAffectation from "../pages/FileAffectation";
+import Clients from "../pages/Clients";
+import ClientDetail from "../pages/ClientDetail";
 import PlaceholderPage from "../pages/PlaceholderPage";
 
 function PublicRoute({ children }) {
@@ -37,8 +39,8 @@ export default function AppRouter() {
             <Route path="dossiers" element={<DossiersList />} />
             <Route path="dossiers/:reference" element={<DossierDetail />} />
             <Route path="file" element={<FileAffectation />} />
-            <Route path="clients" element={<PlaceholderPage pageId="clients" />} />
-            <Route path="clients/:id" element={<PlaceholderPage pageId="clients" />} />
+            <Route path="clients" element={<Clients />} />
+            <Route path="clients/:id" element={<ClientDetail />} />
             <Route path="agences" element={<PlaceholderPage pageId="agences" />} />
             <Route path="utilisateurs" element={<PlaceholderPage pageId="utilisateurs" />} />
             <Route path="specialites" element={<PlaceholderPage pageId="specialites" />} />
