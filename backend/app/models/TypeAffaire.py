@@ -9,8 +9,8 @@ class TypeAffaire(Base):
     __tablename__ = "type_affaire"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    libelle: Mapped[str] = mapped_column(String(150), nullable=False)
+    libelle: Mapped[str] = mapped_column(String(150), nullable=False, unique=True)
     code: Mapped[Optional[str]] = mapped_column(String(30))
 
-    # dossiers: Mapped[List["Dossier"]] = relationship(back_populates="type_affaire")
+    dossiers: Mapped[List["Dossier"]] = relationship(back_populates="type_affaire")
 

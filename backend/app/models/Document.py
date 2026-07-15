@@ -5,6 +5,7 @@ from app.core.base import Base
 from typing import Optional
 from datetime import datetime
 
+
 class Document(Base):
     __tablename__ = "document"
 
@@ -20,5 +21,5 @@ class Document(Base):
     confidentiel: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     created_at: Mapped[datetime] = mapped_column(server_default=func.now())
 
-    # dossier: Mapped["Dossier"] = relationship(back_populates="documents")
-    # uploaded_by: Mapped["User"] = relationship(back_populates="documents_uploades")
+    dossier: Mapped["Dossier"] = relationship("Dossier", back_populates="documents")
+    uploaded_by: Mapped["User"] = relationship("User", back_populates="documents_uploades")

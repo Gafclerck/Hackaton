@@ -1,5 +1,4 @@
-import re
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field
 from datetime import datetime
 from app.models.User import UserRole
 from typing import Optional
@@ -45,8 +44,7 @@ class UserResponse(BaseModel):
     created_at: datetime
     last_login: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class UserUpdateRequest(BaseModel):

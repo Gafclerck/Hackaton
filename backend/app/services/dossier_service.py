@@ -1,0 +1,185 @@
+from fastapi import HTTPException, status
+from sqlalchemy.orm import Session
+from datetime import datetime, timezone
+
+from app.models.Dossier import Dossier, StatutDossier
+from app.models.User import User, UserRole
+from app.models.Client import Client
+from app.models.Agence import Agence
+from app.models.TypeAffaire import TypeAffaire
+from app.schemas.dossier import DossierCreate, DossierAffectation, DossierStatutUpdate, DossierRead
+
+
+# Transitions de statut autorisees
+TRANSITIONS_VALIDES = {
+    StatutDossier.EN_ATTENTE: {StatutDossier.EN_ATTENTE_AFFECTATION, StatutDossier.EN_COURS, StatutDossier.ARCHIVE},
+    StatutDossier.EN_ATTENTE_AFFECTATION: {StatutDossier.EN_COURS},
+    StatutDossier.EN_COURS: {StatutDossier.TERMINE, StatutDossier.ARCHIVE},
+    StatutDossier.TERMINE: {StatutDossier.ARCHIVE},
+    StatutDossier.ARCHIVE: set(),
+}
+
+
+def _to_read(d: Dossier) -> DossierRead:
+    return DossierRead(
+        id=d.id,
+        reference=d.reference,
+        titre=d.titre,
+        description_initiale=d.description_initiale,
+        statut=d.statut,
+        priorite=d.priorite,
+        client_id=d.client_id,
+        client_nom=d.client.nom if d.client else None,
+        agence_receptrice_id=d.agence_receptrice_id,
+        agence_receptrice_nom=d.agence_receptrice.nom if d.agence_receptrice else None,
+        avocat_en_chef_id=d.avocat_en_chef_id,
+        avocat_en_chef_nom=f"{d.avocat_en_chef.prenom} {d.avocat_en_chef.nom}" if d.avocat_en_chef else None,
+        agence_assigne_id=d.agence_assigne_id,
+        agence_assigne_nom=d.agence_assigne.nom if d.agence_assigne else None,
+        avocat_assigne_id=d.avocat_assigne_id,
+        avocat_assigne_nom=f"{d.avocat_assigne.prenom} {d.avocat_assigne.nom}" if d.avocat_assigne else None,
+        type_affaire_id=d.type_affaire_id,
+        type_affaire_libelle=d.type_affaire.libelle if d.type_affaire else None,
+        date_reception=d.date_reception,
+        date_affectation=d.date_affectation,
+        date_cloture=d.date_cloture,
+    )
+
+
+def _generate_reference(db: Session) -> str:
+    annee = datetime.now(timezone.utc).year
+    prefixe = f"DG-{annee}-"
+    last = (
+        db.query(Dossier)
+        .filter(Dossier.reference.like(f"{prefixe}%"))
+        .order_by(Dossier.reference.desc())
+        .first()
+    )
+    if last:
+        num = int(last.reference.split("-")[-1]) + 1
+    else:
+        num = 1
+    return f"{prefixe}{num:05d}"
+
+
+def _verify_foreign_keys(data: DossierCreate, db: Session) -> None:
+    if not db.query(Client).filter(Client.id == data.client_id).first():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Client non trouve")
+    if not db.query(Agence).filter(Agence.id == data.agence_receptrice_id).first():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Agence receptrice non trouvee")
+    if not db.query(User).filter(User.id == data.avocat_en_chef_id).first():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Avocat en chef non trouve")
+    if not db.query(TypeAffaire).filter(TypeAffaire.id == data.type_affaire_id).first():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Type d'affaire non trouve")
+
+
+def create_dossier(data: DossierCreate, user: User, db: Session) -> DossierRead:
+    _verify_foreign_keys(data, db)
+    reference = _generate_reference(db)
+    dossier = Dossier(
+        client_id=data.client_id,
+        agence_receptrice_id=data.agence_receptrice_id,
+        avocat_en_chef_id=data.avocat_en_chef_id,
+        type_affaire_id=data.type_affaire_id,
+        reference=reference,
+        titre=data.titre,
+        description_initiale=data.description_initiale,
+        statut=StatutDossier.EN_ATTENTE,
+        priorite=data.priorite,
+    )
+    db.add(dossier)
+    db.commit()
+    db.refresh(dossier)
+    return _to_read(dossier)
+
+
+def _apply_role_filter(query, user: User):
+    if user.role == UserRole.CHEF_CENTRAL:
+        return query
+    if user.role == UserRole.CHEF_AGENCE:
+        return query.filter(
+            (Dossier.agence_receptrice_id == user.agence_id)
+            | (Dossier.agence_assigne_id == user.agence_id)
+        )
+    # AVOCAT
+    return query.filter(
+        (Dossier.avocat_en_chef_id == user.id)
+        | (Dossier.avocat_assigne_id == user.id)
+    )
+
+
+def list_dossiers(user: User, db: Session, skip: int = 0, limit: int = 20) -> list[DossierRead]:
+    query = db.query(Dossier)
+    query = _apply_role_filter(query, user)
+    dossiers = query.order_by(Dossier.date_reception.desc()).offset(skip).limit(limit).all()
+    return [_to_read(d) for d in dossiers]
+
+
+def get_dossier_by_id(dossier_id: int, user: User, db: Session) -> DossierRead:
+    query = db.query(Dossier).filter(Dossier.id == dossier_id)
+    query = _apply_role_filter(query, user)
+    dossier = query.first()
+    if not dossier:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dossier non trouve")
+    return _to_read(dossier)
+
+
+def affecter_dossier(dossier_id: int, data: DossierAffectation, db: Session) -> DossierRead:
+    dossier = db.query(Dossier).filter(Dossier.id == dossier_id).first()
+    if not dossier:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dossier non trouve")
+    if dossier.statut not in {StatutDossier.EN_ATTENTE, StatutDossier.EN_ATTENTE_AFFECTATION}:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Impossible d'affecter un dossier avec le statut '{dossier.statut.value}'",
+        )
+    if not db.query(User).filter(User.id == data.avocat_assigne_id).first():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Avocat assigne non trouve")
+    if not db.query(Agence).filter(Agence.id == data.agence_assigne_id).first():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Agence assignee non trouvee")
+
+    dossier.agence_assigne_id = data.agence_assigne_id
+    dossier.avocat_assigne_id = data.avocat_assigne_id
+    dossier.date_affectation = datetime.now(timezone.utc)
+    if dossier.statut == StatutDossier.EN_ATTENTE:
+        dossier.statut = StatutDossier.EN_COURS
+    elif dossier.statut == StatutDossier.EN_ATTENTE_AFFECTATION:
+        dossier.statut = StatutDossier.EN_COURS
+
+    db.commit()
+    db.refresh(dossier)
+    return _to_read(dossier)
+
+
+def update_statut(dossier_id: int, data: DossierStatutUpdate, db: Session) -> DossierRead:
+    dossier = db.query(Dossier).filter(Dossier.id == dossier_id).first()
+    if not dossier:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dossier non trouve")
+
+    transitions = TRANSITIONS_VALIDES.get(dossier.statut, set())
+    if data.statut not in transitions:
+        statuts_valides = ", ".join(s.value for s in transitions) or "aucun"
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Transition '{dossier.statut.value}' -> '{data.statut.value}' non autorisee. Statuts valides : {statuts_valides}",
+        )
+
+    dossier.statut = data.statut
+    if data.statut == StatutDossier.TERMINE:
+        dossier.date_cloture = datetime.now(timezone.utc)
+
+    db.commit()
+    db.refresh(dossier)
+    return _to_read(dossier)
+
+
+def delete_dossier(dossier_id: int, db: Session) -> None:
+    dossier = db.query(Dossier).filter(Dossier.id == dossier_id).first()
+    if not dossier:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dossier non trouve")
+    if dossier.statut == StatutDossier.ARCHIVE:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Dossier deja archive")
+
+    dossier.statut = StatutDossier.ARCHIVE
+    dossier.date_cloture = datetime.now(timezone.utc)
+    db.commit()
