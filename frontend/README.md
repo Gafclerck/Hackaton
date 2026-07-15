@@ -13,7 +13,43 @@ Il est responsable de :
 
 ---
 
-# Installation
+# Lancement complet (frontend + backend)
+
+> Pour les details complets (base de donnees, Alembic, etc.), voir le README a la racine du projet.
+
+### Depuis la racine du projet
+
+```bash
+# Terminal 1 : Backend
+cd backend
+cp .env.example .env          # puis remplir les valeurs
+python -m venv .venv
+.venv\Scripts\activate         # Windows (source .venv/bin/activate sur macOS/Linux)
+pip install -r requirements.txt
+alembic upgrade head
+uvicorn app.main:app --reload  # http://localhost:8000
+
+# Terminal 2 : Frontend
+cd frontend
+npm install
+npm run dev                    # http://localhost:5173
+```
+
+### Fichier d'environnement frontend (optionnel)
+
+Par defaut, le frontend appelle `http://localhost:8000`. Si besoin de changer :
+
+```bash
+echo "VITE_API_URL=http://localhost:8000" > .env
+```
+
+### Comptes demo
+
+La page de login contient des boutons pour se connecter directement avec les comptes demo (chef_central, chef_agence, avocat).
+
+---
+
+# Installation (frontend seul)
 
 ## Prérequis
 

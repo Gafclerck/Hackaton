@@ -17,12 +17,5 @@ export default defineConfig([
       globals: globals.browser,
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
-    rules: {
-      // React 19 strict rules — disable for async data fetching patterns
-      // Standard useEffect + setState + .then() is the accepted pattern
-      'react-hooks/set-state-in-effect': 'off',
-      'react-hooks/purity': 'off',
-      'react-hooks/refs': 'off',
-    },
   },
 ])
