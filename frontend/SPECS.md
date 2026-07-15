@@ -140,7 +140,7 @@ All tokens are defined in `src/index.css` via CSS custom properties in `:root`, 
 | `--border` | `#D8D3C8` | Warm gray — all borders |
 | `--destructive` | `#B3261E` | Red — delete, errors |
 | `--success` | `#2F7A54` | Green — completed, positive |
-| `--warning` | `#B7791F` | Amber — warnings, high priority |
+| `--warning` | `#B7791F` | Amber - warnings, high priority |
 | `--muted-foreground` | `#6B6860` | Gray — secondary text |
 | `--foreground` | `#27272A` | Near-black — primary text |
 
@@ -773,9 +773,6 @@ These features exist in the frontend but have no backend endpoints yet:
 
 | Feature | Endpoint needed | Notes |
 |---------|----------------|-------|
-| Dossier CRUD | `GET/POST/PATCH/DELETE /api/dossiers` | Core feature, highest priority |
-| Dossier affectation | `PATCH /api/dossiers/:id/affecter` | Assign agence + lawyer |
-| Dossier transfer | `POST /api/dossiers/:id/transfer` | Request transfer with motif |
 | Document upload | `POST /api/dossiers/:id/documents` | File attachment |
 | Historique | `GET /api/dossiers/:id/historique` | Audit trail |
 | Notifications | `GET/PATCH /api/notifications` | User notifications |
