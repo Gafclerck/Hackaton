@@ -10,3 +10,5 @@ api_router.include_router(client.router, prefix="/client", tags=["client"])
 api_router.include_router(agence.router, prefix="/agence", tags=["agence"])
 api_router.include_router(referentiel.router, prefix="/referentiel", tags=["referentiel"])
 api_router.include_router(dossier.router, prefix="/dossier", tags=["dossier"])
+api_router.include_router(historique.router, prefix="/historique", tags=["historique"])
+

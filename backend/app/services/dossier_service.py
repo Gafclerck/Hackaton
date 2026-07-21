@@ -9,6 +9,8 @@ from app.models.Agence import Agence
 from app.models.TypeAffaire import TypeAffaire
 from app.schemas.dossier import DossierCreate, DossierAffectation, DossierStatutUpdate, DossierRead
 from app.models.HistoriqueAction import HistoriqueAction
+from app.services.S import HistoriqueAction
+from app.services.historiques_service import create_historique
 
 
 # Transitions de statut autorisees
@@ -113,6 +115,16 @@ def create_dossier(data: DossierCreate, user: User, db: Session) -> DossierRead:
         priorite=data.priorite,
     )
     db.add(dossier)
+    histo = HistoriqueAction(
+        dossier_id=dossier_id,
+        user_id=user.id,
+        action="creation dossier",
+        ancienne_valeur={"statut": StatutDossier.EN_ATTENTE_AFFECTATION.value},
+        nouvelle_valeur={"statut": StatutDossier.EN_ATTENTE_AFFECTATION.value},
+        commentaire="",
+        created_at= datetime.now(timezone.utc)
+    )
+    db.add(histo)
     db.commit()
     db.refresh(dossier)
     return _to_read(dossier)
@@ -149,7 +161,7 @@ def get_dossier_by_id(dossier_id: int, user: User, db: Session) -> DossierRead:
     return _to_read(dossier)
 
 
-def affecter_dossier(dossier_id: int, data: DossierAffectation, db: Session) -> DossierRead:
+def affecter_dossier(dossier_id: int, data: DossierAffectation, db: Session,user: User) -> DossierRead:
     dossier = db.query(Dossier).filter(Dossier.id == dossier_id).first()
     if not dossier:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dossier non trouve")
@@ -171,12 +183,23 @@ def affecter_dossier(dossier_id: int, data: DossierAffectation, db: Session) -> 
     elif dossier.statut == StatutDossier.EN_ATTENTE_AFFECTATION:
         dossier.statut = StatutDossier.EN_COURS
 
+    histo = HistoriqueAction(
+        dossier_id=dossier_id,
+        user_id=user.id,
+        action="affectation dossier",
+        ancienne_valeur={"statut": ancien_statut, "agence_assigne_id": ancienne_agence},
+        nouvelle_valeur={"statut": StatutDossier.EN_ATTENTE_AFFECTATION.value},
+        commentaire="",
+        created_at= datetime.now(timezone.utc)
+    )
+    db.add(histo)
     db.commit()
+
     db.refresh(dossier)
     return _to_read(dossier)
 
 
-def update_statut(dossier_id: int, data: DossierStatutUpdate, db: Session) -> DossierRead:
+def update_statut(dossier_id: int, data: DossierStatutUpdate, db: Session,user: User) -> DossierRead:
     dossier = db.query(Dossier).filter(Dossier.id == dossier_id).first()
     if not dossier:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dossier non trouve")
@@ -193,6 +216,16 @@ def update_statut(dossier_id: int, data: DossierStatutUpdate, db: Session) -> Do
     if data.statut == StatutDossier.TERMINE:
         dossier.date_cloture = datetime.now(timezone.utc)
 
+    histo = HistoriqueAction(
+        dossier_id=dossier_id,
+        user_id=user.id,
+        action="transfert",
+        ancienne_valeur={"statut": ancien_statut, "agence_assigne_id": ancienne_agence},
+        nouvelle_valeur={"statut": StatutDossier.EN_ATTENTE_AFFECTATION.value},
+        commentaire="",
+        created_at= datetime.now(timezone.utc)
+    )
+    db.add(histo)
     db.commit()
     db.refresh(dossier)
     return _to_read(dossier)
@@ -213,21 +246,22 @@ def transfer_dossier(dossier_id: int, motif: str, user: User, db: Session) -> Do
     dossier.avocat_assigne_id = None
     dossier.date_affectation = None
 
-    historique = HistoriqueAction(
+    histo = HistoriqueAction(
         dossier_id=dossier_id,
         user_id=user.id,
         action="transfert",
         ancienne_valeur={"statut": ancien_statut, "agence_assigne_id": ancienne_agence},
         nouvelle_valeur={"statut": StatutDossier.EN_ATTENTE_AFFECTATION.value},
-        commentaire=motif,
+        commentaire="",
+        created_at= datetime.now(timezone.utc)
     )
-    db.add(historique)
+    db.add(histo)
     db.commit()
     db.refresh(dossier)
     return _to_read(dossier)
 
 
-def delete_dossier(dossier_id: int, db: Session) -> None:
+def delete_dossier(dossier_id: int, db: Session, user: User) -> None:
     dossier = db.query(Dossier).filter(Dossier.id == dossier_id).first()
     if not dossier:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Dossier non trouve")
@@ -236,4 +270,15 @@ def delete_dossier(dossier_id: int, db: Session) -> None:
 
     dossier.statut = StatutDossier.ARCHIVE
     dossier.date_cloture = datetime.now(timezone.utc)
+    histo = HistoriqueAction(
+        dossier_id=dossier_id,
+        user_id=user.id,
+        action="suppression du dossier",
+        ancienne_valeur={"statut": ancien_statut, "agence_assigne_id": ancienne_agence},
+        nouvelle_valeur={"statut": StatutDossier.EN_ATTENTE_AFFECTATION.value},
+        commentaire=motif,
+        created_at= datetime.now(timezone.utc)
+    )
+    db.add(histo)
     db.commit()
+
